@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Profile · Elena Martín · Fever Data Cloud</title>
+    <!-- Favicon -->
+    <link rel="icon" href="https://feverup.com/logo/fever-logo-black.svg" type="image/svg+xml">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f4f4f5; color: #18181B; margin: 0; padding: 0; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Sidebar oscuro Fever */
+        .sidebar-dark {
+            background: linear-gradient(180deg, #18181B 0%, #050505 100%);
+            color: #ffffff;
+        }
+
+        .separator-line {
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin: 16px 0;
+        }
+
+        /* Tabs personalizados */
+        .tab-active { border-bottom: 3px solid #E9007F; color: #E9007F; font-weight: 700; }
+        .tab-inactive { color: #71717A; font-weight: 500; }
+        .tab-inactive:hover { color: #E9007F; }
+
+        .fever-gradient { background: linear-gradient(135deg, #E9007F 0%, #C026D3 100%); }
+        .fever-gradient-text {
+            background: linear-gradient(135deg, #E9007F 0%, #C026D3 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .fever-logo-circle {
+            background: linear-gradient(135deg, #E9007F 0%, #C026D3 100%);
+            color: white;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const ELENA_AVATAR = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80";
+        const FEVER_LOGO = "https://feverup.com/logo/fever-logo-black.svg";
+
+        // Logo Fever oficial. invert=true para fondos oscuros.
+        const FeverLogo = ({ className = "h-6", invert = false }) => (
+            <img
+                src={FEVER_LOGO}
+                alt="Fever"
+                className={`${className} object-contain`}
+                style={invert ? { filter: 'brightness(0) invert(1)' } : {}}
+            />
+        );
+
+        // Icono de marca dentro de círculo (avatares en transcripciones, header, etc.)
+        const FeverLogoIcon = ({ className = "" }) => (
+            <div className={`bg-black rounded flex items-center justify-center p-1 ${className}`}>
+                <FeverLogo className="w-full h-auto" invert />
+            </div>
+        );
+
+        function DataCloudDashboard() {
+            const [loaded, setLoaded] = useState(false);
+            const [activeBottomTab, setActiveBottomTab] = useState('affinities');
+            const [activeTopTab, setActiveTopTab] = useState('related');
+            const [selectedChat, setSelectedChat] = useState(null);
+
+            // Sesiones omnicanal de Agentforce con Elena: Email → Web → WhatsApp → App
+            const chatSessions = [
+                {
+                    id: 1,
+                    date: "Hoy · 19:18",
+                    channel: "App Fever",
+                    title: "Pago en app + confirmación",
+                    summary: "Elena abre el deeplink desde WhatsApp, recupera el carrito FEV-49281 en la app de Fever, paga 2 entradas con VIP Experience y recibe notificación in-app de confirmación. Golden Profile actualizado en tiempo real.",
+                    transcript: [
+                        { role: 'agent', text: "App: carrito FEV-49281 recuperado desde WhatsApp · Mantenido contexto completo del journey." },
+                        { role: 'user', text: "[Acción] Elena confirma el carrito y procede al pago." },
+                        { role: 'agent', text: "Pago procesado correctamente · Total 178,00€ con Apple Pay. 2 entradas GA + VIP Experience confirmadas." },
+                        { role: 'user', text: "[Acción] Elena recibe notificación in-app: 'Entradas confirmadas · Aurora Nights · 15 de junio · Madrid'." },
+                        { role: 'agent', text: "Golden Profile actualizado: compra confirmada, upgrade VIP, progreso Fever Insider +1 evento, afinidad por experiencias premium reforzada." }
+                    ]
+                },
+                {
+                    id: 2,
+                    date: "Hoy · 19:14",
+                    channel: "WhatsApp",
+                    title: "Retargeting conversacional + deeplink de pago",
+                    summary: "Tras abandonar la web, Fever Agentforce contacta a Elena por WhatsApp con el contexto completo del journey. Le recuerda Aurora Nights, el upgrade VIP añadido y el carrito guardado. Elena acepta recibir un deeplink seguro que abre el checkout en la app de Fever.",
+                    transcript: [
+                        { role: 'agent', text: "Hola Elena 👋 He visto que dejaste guardada tu propuesta para Aurora Nights · Electronic Live Experience antes de finalizar la compra. Mantengo el contexto completo de tu conversación por email y web: plan en pareja, afinidad por música electrónica, interés por una experiencia premium y el upgrade VIP que añadiste. ¿Quieres que te deje un enlace seguro para finalizar la compra directamente en la app de Fever?" },
+                        { role: 'user', text: "Sí, enviarme enlace de pago" },
+                        { role: 'agent', text: "Perfecto, Elena. Te dejo aquí tu enlace seguro con deep linking para completar el pago en la app: https://app.feverup.com/checkout/cart/FEV-49281. Resumen: • Aurora Nights · Electronic Live Experience • 15 de junio · Madrid · Movistar Arena Madrid • 2 entradas seleccionadas • VIP Experience añadido • Beneficios Fever Insider activos • Carrito FEV-49281." },
+                        { role: 'user', text: "Perfecto, lo pago ahora desde la app" },
+                        { role: 'agent', text: "Genial, Elena. Te mantengo el carrito reservado durante los próximos minutos. Cuando completes el pago en la app, recibirás la confirmación automáticamente. Nos vemos en la pista 💃" }
+                    ]
+                },
+                {
+                    id: 3,
+                    date: "Hoy · 14:28",
+                    channel: "Web App",
+                    title: "Revisión de evento + recomendaciones personalizadas",
+                    summary: "Elena accede desde el CTA del email a la ficha de Aurora Nights. Conversa con Fever Agentforce, que mantiene el contexto del email y recomienda VIP Experience, After-party oficial y Fever Insider. Elena añade VIP Experience al carrito y abandona la web sin finalizar la compra.",
+                    transcript: [
+                        { role: 'agent', text: "¡Hola Elena! 👋 Continuamos desde la conversación que empezaste por email. Ya tengo el contexto: buscas un plan especial para ir con tu pareja, tienes alta afinidad por música electrónica y sueles valorar experiencias premium. Estás viendo Aurora Nights, el evento que te recomendé para Madrid. ¿Quieres que revisemos juntos la mejor combinación antes de decidir?" },
+                        { role: 'user', text: "Me gusta el evento, pero antes de comprar quiero entender si merece la pena pagar más por una experiencia VIP o añadir algo más al plan." },
+                        { role: 'agent', text: "Perfecto, Elena. Con el contexto de tu perfil —compra en pareja, alta afinidad por experiencias nocturnas y propensión premium— te muestro 3 recomendaciones personalizadas: • VIP Experience: acceso prioritario, zona reservada y mejor visibilidad. • After-party oficial: acceso exclusivo después del evento. • Fever Insider: loyalty para early access, puntos y futuras ventajas." },
+                        { role: 'user', text: "[Acción] Elena añadió 'VIP Experience' al carrito." },
+                        { role: 'agent', text: "Perfecto, Elena. He añadido VIP Experience a tu propuesta. También guardo esta preferencia en tu Golden Profile para que, si continúas más tarde por WhatsApp o desde la app, podamos retomar la experiencia justo desde este punto." },
+                        { role: 'user', text: "Voy a darle una vuelta y lo reviso con calma." },
+                        { role: 'agent', text: "Te dejo la propuesta guardada, Elena. Si sales ahora, podrás retomarla más tarde desde WhatsApp o desde la app de Fever sin perder el contexto." }
+                    ]
+                },
+                {
+                    id: 4,
+                    date: "Hoy · 14:08",
+                    channel: "Email Agent",
+                    title: "Campaña personalizada · Aurora Nights",
+                    summary: "Elena recibe una campaña personalizada de Fever basada en su afinidad por música electrónica, experiencias nocturnas y compras en pareja. Responde al email explicando que busca un plan especial. Fever Agentforce recomienda Aurora Nights y prepara una propuesta personalizada con CTA a la web.",
+                    transcript: [
+                        { role: 'agent', text: "Elena, hemos detectado que este evento encaja con tus últimas experiencias: música electrónica, planes nocturnos premium y compras en pareja. Aurora Nights · Electronic Live Experience · Madrid · 15 de junio. ¿Hablamos de tu próximo plan? Responde y te preparo una propuesta a medida." },
+                        { role: 'user', text: "Hola, me interesa mucho. Busco un plan especial para ir con mi pareja. Nos gusta la música electrónica y solemos preferir experiencias con acceso cómodo, buena visibilidad y algo diferente al típico concierto. ¿Qué me recomiendas?" },
+                        { role: 'agent', text: "Hola Elena. Por tu historial de experiencias, tu afinidad por música electrónica y tu patrón de compra en pareja, Aurora Nights encaja muy bien contigo. Te recomiendo 2 entradas para el evento del 15 de junio en Madrid y dejar preparada la opción VIP. He preparado una propuesta personalizada con: • 2 entradas para Aurora Nights • Opción VIP Experience • Acceso a after-party oficial • Beneficios Fever Insider. Puedes revisar el detalle y continuar la compra en la web. [CTA: Ver experiencia personalizada]" }
+                    ]
+                }
+            ];
+
+            useEffect(() => {
+                setLoaded(true);
+            }, []);
+
+            return (
+                <div className="h-screen flex flex-col bg-[#f4f4f5]">
+
+                    {/* GLOBAL TOP NAV */}
+                    <header className="bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4 shrink-0">
+                        <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-3">
+                                <FeverLogo className="h-6" />
+                                <span className="text-gray-300">·</span>
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-[#71717A]">Data Cloud</span>
+                            </div>
+
+                            <div className="hidden md:flex bg-gray-100 rounded-md px-3 py-1.5 items-center w-80 border border-gray-200">
+                                <i className="fa-solid fa-magnifying-glass text-gray-400 text-sm mr-2"></i>
+                                <input type="text" placeholder="Buscar profile, segmento, journey..." className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder-gray-400" />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-gray-500">
+                            <i className="fa-solid fa-star cursor-pointer hover:text-[#E9007F] transition"></i>
+                            <i className="fa-solid fa-plus cursor-pointer hover:text-gray-800 transition text-lg"></i>
+                            <i className="fa-solid fa-circle-question cursor-pointer hover:text-gray-800 transition text-lg"></i>
+                            <i className="fa-solid fa-gear cursor-pointer hover:text-gray-800 transition text-lg"></i>
+                            <div className="relative cursor-pointer hover:text-gray-800 transition">
+                                <i className="fa-solid fa-bell text-lg"></i>
+                                <span className="absolute -top-1 -right-1 bg-[#E9007F] w-2.5 h-2.5 rounded-full border-2 border-white"></span>
+                            </div>
+                            <div className="ml-2 w-8 h-8 rounded-full fever-gradient flex items-center justify-center text-white text-xs font-bold cursor-pointer">
+                                JM
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* APP SUB-NAV (Data Cloud Menu) */}
+                    <div className="bg-white border-b border-gray-200 h-12 flex items-center px-4 shrink-0 overflow-x-auto text-sm">
+                        <div className="flex items-center gap-2 mr-6 font-bold text-[#E9007F] shrink-0">
+                            <i className="fa-solid fa-braille text-gray-400 mr-1"></i>
+                            Data Cloud
+                        </div>
+
+                        <div className="flex h-full gap-6 font-medium text-gray-600 shrink-0 whitespace-nowrap">
+                            <span className="flex items-center border-b-2 border-transparent hover:text-[#E9007F] hover:border-gray-300 cursor-pointer transition-colors px-1">Home</span>
+                            <span className="flex items-center border-b-2 border-transparent hover:text-[#E9007F] hover:border-gray-300 cursor-pointer transition-colors px-1">Fever Agentforce</span>
+                            <span className="flex items-center gap-1 border-b-2 border-transparent hover:text-[#E9007F] hover:border-gray-300 cursor-pointer transition-colors px-1">Data Streams <i className="fa-solid fa-chevron-down text-[10px] mt-0.5"></i></span>
+                            <span className="flex items-center gap-1 border-b-2 border-transparent hover:text-[#E9007F] hover:border-gray-300 cursor-pointer transition-colors px-1">Data Prep <i className="fa-solid fa-chevron-down text-[10px] mt-0.5"></i></span>
+                            <span className="flex items-center gap-1 border-b-2 border-transparent hover:text-[#E9007F] hover:border-gray-300 cursor-pointer transition-colors px-1">Identity Resolution <i className="fa-solid fa-chevron-down text-[10px] mt-0.5"></i></span>
+                            <span className="flex items-center gap-1 border-b-2 border-transparent hover:text-[#E9007F] hover:border-gray-300 cursor-pointer transition-colors px-1">Segments <i className="fa-solid fa-chevron-down text-[10px] mt-0.5"></i></span>
+                            <span className="flex items-center gap-1 border-b-2 border-transparent hover:text-[#E9007F] hover:border-gray-300 cursor-pointer transition-colors px-1">Loyalty <i className="fa-solid fa-chevron-down text-[10px] mt-0.5"></i></span>
+
+                            {/* Active Tab */}
+                            <span className="flex items-center gap-1.5 border-b-2 border-[#E9007F] text-[#E9007F] font-bold cursor-default px-1">
+                                <i className="fa-regular fa-user text-[#C026D3]"></i>
+                                Elena Martín
+                                <i className="fa-solid fa-xmark text-gray-400 hover:text-[#C026D3] cursor-pointer text-xs ml-1"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* DASHBOARD GRID */}
+                    <div className={`flex-1 flex overflow-hidden p-4 gap-4 ${loaded ? 'fade-in' : 'opacity-0'}`}>
+
+                        {/* COLUMN 1: DARK PROFILE SIDEBAR (Left) */}
+                        <div className="w-1/5 sidebar-dark rounded-xl shadow-lg flex flex-col shrink-0 overflow-y-auto">
+                            <div className="p-6">
+                                {/* Foto y nombre */}
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-16 h-16 rounded-full fever-gradient p-0.5 shrink-0">
+                                        <div className="w-full h-full rounded-full overflow-hidden border-2 border-[#050505]">
+                                            <img src={ELENA_AVATAR} alt="Elena" className="w-full h-full object-cover"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h2 className="font-bold text-xl leading-tight text-white">Elena Martín</h2>
+                                        <p className="text-sm text-gray-300">28 años · Madrid</p>
+                                    </div>
+                                </div>
+
+                                {/* Quote de perfil */}
+                                <div className="mb-5 italic text-[11px] text-gray-400 leading-relaxed pl-3 border-l-2 border-[#E9007F]/40">
+                                    "Busco experiencias únicas, buena música y planes que merezcan la pena compartir."
+                                </div>
+
+                                {/* Información de identidad */}
+                                <div className="space-y-3 text-[13px] text-gray-200">
+                                    <div className="flex items-center gap-3">
+                                        <i className="fa-regular fa-id-card w-4 text-center"></i>
+                                        <span>Cliente ID <strong>FEV-3041982E</strong></span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <i className="fa-regular fa-envelope w-4 text-center"></i>
+                                        <span className="truncate">elena.martin@gmail.com</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <i className="fa-brands fa-whatsapp w-4 text-center text-[#25D366]"></i>
+                                        <span>+34 600 482 119 (Opt-in)</span>
+                                    </div>
+                                </div>
+
+                                <div className="separator-line"></div>
+
+                                {/* Tier Fever Insider + Customer Value inferido */}
+                                <div className="mb-2">
+                                    <div className="flex gap-3 text-[13px] mb-3">
+                                        <i className="fa-solid fa-bolt w-4 text-center text-[#FF2D95] mt-0.5"></i>
+                                        <div className="text-gray-300">Tier Fever Insider</div>
+                                    </div>
+                                    <div className="px-2 flex flex-col items-center">
+                                        {/* Tarjeta loyalty Fever */}
+                                        <div className="relative w-4/5 mb-3 transform hover:scale-105 transition duration-300 drop-shadow-lg">
+                                            <div className="w-full aspect-[1.586] rounded-md fever-gradient relative overflow-hidden flex flex-col justify-between p-3 text-white">
+                                                <div className="absolute -top-8 -right-8 w-24 h-24 bg-white/15 rounded-full blur-2xl"></div>
+                                                <div className="absolute -bottom-10 -left-6 w-24 h-24 bg-[#00D4FF]/30 rounded-full blur-2xl"></div>
+                                                <div className="flex items-start justify-between relative">
+                                                    <FeverLogo className="h-3.5" invert />
+                                                    <span className="text-[8px] font-bold uppercase tracking-widest bg-white/20 backdrop-blur px-1.5 py-0.5 rounded">Insider</span>
+                                                </div>
+                                                <div className="relative">
+                                                    <p className="font-mono text-[10px] tracking-[0.18em] mb-0.5">ELENA M.</p>
+                                                    <p className="text-[8px] uppercase opacity-80 tracking-wider">Live Addict · MAD</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Customer Value inferido por Data Cloud */}
+                                        <div className="w-full mt-1 px-2">
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <span className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Customer Value</span>
+                                                <span className="text-[8px] uppercase tracking-wider text-gray-500 italic">Inferido</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="fever-gradient text-white text-[10px] font-bold tracking-[0.2em] px-2.5 py-1 rounded-full shadow-sm">LIVE ADDICT</span>
+                                                <span className="text-[10px] text-gray-300">Big Shot emergente</span>
+                                            </div>
+                                            <p className="text-[10px] text-gray-400 leading-snug">
+                                                Calculado por Data Cloud a partir de <span className="text-gray-200 font-medium">3+ eventos compra</span>, <span className="text-gray-200 font-medium">VIP previo</span>, patrón en pareja y alta afinidad nocturna en Madrid.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="separator-line"></div>
+
+                                {/* Microsegmento */}
+                                <div className="flex gap-3 text-[13px] mb-2">
+                                    <i className="fa-solid fa-arrow-down-up-across-line w-4 text-center text-[#FF2D95] mt-0.5"></i>
+                                    <div>
+                                        <div className="text-gray-300 mb-1">Microsegmento</div>
+                                        <div className="font-semibold text-white">Superfan Pop Electrónico Madrid</div>
+                                    </div>
+                                </div>
+
+                                <div className="separator-line"></div>
+
+                                {/* Segmento base */}
+                                <div className="flex gap-3 text-[13px] mb-2">
+                                    <i className="fa-solid fa-chart-pie w-4 text-center text-[#FF2D95] mt-0.5"></i>
+                                    <div>
+                                        <div className="text-gray-300 mb-1">Segmento base</div>
+                                        <div className="font-semibold text-white">Live Addict / Big Shot emergente</div>
+                                    </div>
+                                </div>
+
+                                <div className="separator-line"></div>
+
+                                {/* Lifetime Value */}
+                                <div className="flex gap-3 text-[13px] mb-2">
+                                    <i className="fa-solid fa-ticket w-4 text-center text-[#FF2D95] mt-0.5"></i>
+                                    <div>
+                                        <div className="text-gray-300 mb-1">Lifetime Value</div>
+                                        <div className="font-bold text-lg text-white">842,00€</div>
+                                        <div className="text-[11px] text-gray-300">(Media segmento 320€)</div>
+                                    </div>
+                                </div>
+
+                                <div className="separator-line"></div>
+
+                                {/* Propensiones */}
+                                <div className="flex gap-3 text-[13px] mb-4">
+                                    <i className="fa-solid fa-crown w-4 text-center text-[#FF2D95] mt-0.5"></i>
+                                    <div className="w-full">
+                                        <div className="text-gray-300 mb-2">Propensiones clave</div>
+                                        <div className="space-y-2">
+                                            <div>
+                                                <div className="flex justify-between text-[11px] mb-0.5"><span className="text-gray-400">VIP</span><strong className="text-white">Alta</strong></div>
+                                                <div className="w-full bg-white/10 h-1 rounded-full"><div className="h-full fever-gradient rounded-full" style={{width: '88%'}}></div></div>
+                                            </div>
+                                            <div>
+                                                <div className="flex justify-between text-[11px] mb-0.5"><span className="text-gray-400">After-party</span><strong className="text-white">Alta</strong></div>
+                                                <div className="w-full bg-white/10 h-1 rounded-full"><div className="h-full fever-gradient rounded-full" style={{width: '83%'}}></div></div>
+                                            </div>
+                                            <div>
+                                                <div className="flex justify-between text-[11px] mb-0.5"><span className="text-gray-400">Loyalty</span><strong className="text-white">Alta</strong></div>
+                                                <div className="w-full bg-white/10 h-1 rounded-full"><div className="h-full fever-gradient rounded-full" style={{width: '85%'}}></div></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="separator-line"></div>
+
+                                {/* Engagement Score */}
+                                <div className="flex gap-3 text-[13px] mb-2">
+                                    <i className="fa-solid fa-user-check w-4 text-center text-[#FF2D95] mt-1"></i>
+                                    <div className="w-full">
+                                        <div className="text-gray-300 mb-3">Engagement Score <strong className="text-white text-base ml-1">94%</strong></div>
+
+                                        <div className="flex items-end gap-3">
+                                            <div className="relative w-28 h-14 shrink-0">
+                                                <svg viewBox="0 0 100 50" className="w-full h-full overflow-visible">
+                                                    <defs>
+                                                        <linearGradient id="feverGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                            <stop offset="0%" stopColor="#E9007F" />
+                                                            <stop offset="100%" stopColor="#C026D3" />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="10" strokeLinecap="round" />
+                                                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="url(#feverGrad)" strokeWidth="10" strokeLinecap="round" strokeDasharray="125.6" strokeDashoffset="7" />
+                                                    <g style={{transform: 'rotate(75deg)', transformOrigin: '50px 50px'}}>
+                                                        <polygon points="48,50 52,50 50,12" fill="#ffffff" />
+                                                        <circle cx="50" cy="50" r="4" fill="#ffffff" />
+                                                    </g>
+                                                </svg>
+                                            </div>
+                                            <div className="pb-1">
+                                                <div className="font-bold text-white leading-tight mb-1">Altamente comprometida</div>
+                                                <div className="text-[10px] text-gray-300 leading-tight">Comparado con 38K<br/>fans del segmento</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            {/* Footer Icons (Sidebar) */}
+                            <div className="mt-auto p-6 flex gap-4 text-gray-300 text-lg border-t border-white/10">
+                                <span className="text-xs mr-2 font-medium self-center">Datos del perfil:</span>
+                                <i className="fa-solid fa-ticket hover:text-white cursor-pointer transition" title="Compras"></i>
+                                <i className="fa-solid fa-music hover:text-white cursor-pointer transition" title="Eventos"></i>
+                                <i className="fa-regular fa-heart hover:text-white cursor-pointer transition" title="Wishlist"></i>
+                                <i className="fa-solid fa-bolt hover:text-white cursor-pointer transition" title="Loyalty"></i>
+                            </div>
+                        </div>
+
+                        {/* COLUMN 2: MAIN CONTENT (Center) */}
+                        <div className="w-3/5 flex flex-col gap-4 overflow-y-auto pr-2">
+
+                            {/* TOP CARD: Eventos / Detalles / Live Chat */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[300px] shrink-0">
+                                <div className="flex border-b border-gray-200 px-2 pt-2 shrink-0">
+                                    <button
+                                        onClick={() => { setActiveTopTab('related'); setSelectedChat(null); }}
+                                        className={`px-4 py-3 text-sm transition-colors ${activeTopTab === 'related' ? 'tab-active' : 'tab-inactive'}`}>
+                                        Eventos & Compras
+                                    </button>
+                                    <button
+                                        onClick={() => { setActiveTopTab('details'); setSelectedChat(null); }}
+                                        className={`px-4 py-3 text-sm transition-colors ${activeTopTab === 'details' ? 'tab-active' : 'tab-inactive'}`}>
+                                        Detalles
+                                    </button>
+                                    <button
+                                        onClick={() => { setActiveTopTab('demand'); setSelectedChat(null); }}
+                                        className={`px-4 py-3 text-sm transition-colors ${activeTopTab === 'demand' ? 'tab-active' : 'tab-inactive'}`}>
+                                        Demand Prediction
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTopTab('live_chat')}
+                                        className={`px-4 py-3 text-sm transition-colors ${activeTopTab === 'live_chat' ? 'tab-active' : 'tab-inactive'}`}>
+                                        Sesiones Agentforce
+                                    </button>
+                                </div>
+
+                                {/* CONTENIDO: EVENTOS Y COMPRAS */}
+                                {activeTopTab === 'related' && (
+                                    <div className="p-5 flex-1 flex flex-col fade-in">
+                                        <h3 className="font-bold text-[#E9007F] mb-4">Compras y eventos recientes</h3>
+
+                                        <div className="border border-gray-200 rounded-lg overflow-hidden flex-1">
+                                            <table className="w-full text-left text-sm">
+                                                <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 font-semibold">
+                                                    <tr>
+                                                        <th className="p-3">Evento / Servicio</th>
+                                                        <th className="p-3 hidden lg:table-cell">Descripción</th>
+                                                        <th className="p-3 text-center">Importe</th>
+                                                        <th className="p-3 text-right">Fecha</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100 text-gray-700">
+                                                    <tr className="hover:bg-gray-50 transition bg-pink-50/40">
+                                                        <td className="p-3 font-medium text-[#E9007F]">
+                                                            Aurora Nights · Electronic Live Experience
+                                                            <span className="ml-1 inline-block bg-[#22C55E] text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider align-middle">Pago hoy en app</span>
+                                                        </td>
+                                                        <td className="p-3 hidden lg:table-cell text-xs">2 entradas GA + VIP Experience · 15 jun · Madrid · Carrito FEV-49281 confirmado tras retargeting WhatsApp.</td>
+                                                        <td className="p-3 text-center">178,00€</td>
+                                                        <td className="p-3 text-right text-gray-500 whitespace-nowrap">Hoy</td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition bg-pink-50/40">
+                                                        <td className="p-3 font-medium text-[#E9007F]">
+                                                            VIP Experience · Aurora Nights
+                                                            <span className="ml-1 inline-block bg-[#C026D3] text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider align-middle">Ancillary upsell</span>
+                                                        </td>
+                                                        <td className="p-3 hidden lg:table-cell text-xs">Upgrade premium recomendado por Agentforce · Acceso prioritario, zona reservada, copa de bienvenida.</td>
+                                                        <td className="p-3 text-center">70,00€</td>
+                                                        <td className="p-3 text-right text-gray-500 whitespace-nowrap">Hoy</td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition">
+                                                        <td className="p-3 font-medium text-[#E9007F]">Synthwave Sessions · Madrid</td>
+                                                        <td className="p-3 hidden lg:table-cell text-xs">2 entradas VIP · Experiencia premium con upgrade en compra anterior.</td>
+                                                        <td className="p-3 text-center">186,00€</td>
+                                                        <td className="p-3 text-right text-gray-500 whitespace-nowrap">15 mar 2026</td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition">
+                                                        <td className="p-3 font-medium text-[#E9007F]">Disco Future Live · Barcelona</td>
+                                                        <td className="p-3 hidden lg:table-cell text-xs">2 entradas General Admission · Mobility entre Madrid y Barcelona detectada.</td>
+                                                        <td className="p-3 text-center">128,00€</td>
+                                                        <td className="p-3 text-right text-gray-500 whitespace-nowrap">22 ene 2026</td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition">
+                                                        <td className="p-3 font-medium text-[#E9007F]">Neon Nights Festival · Madrid</td>
+                                                        <td className="p-3 hidden lg:table-cell text-xs">2 entradas General Admission · Pop electrónico · Compra con 18 días de antelación.</td>
+                                                        <td className="p-3 text-center">280,00€</td>
+                                                        <td className="p-3 text-right text-gray-500 whitespace-nowrap">9 nov 2025</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div className="text-center mt-3">
+                                            <a href="#" className="text-sm font-semibold text-[#C026D3] hover:text-[#831843]">Ver todo el historial</a>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* CONTENIDO: DETALLES */}
+                                {activeTopTab === 'details' && (
+                                    <div className="p-5 flex-1 flex flex-col fade-in overflow-y-auto bg-gray-50/50">
+                                        <h3 className="font-bold text-[#E9007F] mb-4">Detalles del fan profile</h3>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                            {/* Contact Info Card */}
+                                            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                                                <h4 className="font-bold text-[#E9007F] text-[14px] mb-4 flex items-center gap-2 pb-2 border-b border-gray-100">
+                                                    <i className="fa-solid fa-address-book text-[#C026D3]"></i> Información de contacto
+                                                </h4>
+                                                <div className="space-y-4 text-[13px] flex-1">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Nombre completo</span>
+                                                        <span className="font-medium text-[#18181B]">Elena Martín García</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Edad</span>
+                                                        <span className="font-medium text-[#18181B]">28 años</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Email</span>
+                                                        <span className="font-medium text-[#18181B]">elena.martin@gmail.com</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-gray-500">Teléfono móvil</span>
+                                                        <div className="text-right">
+                                                            <span className="font-medium text-[#18181B] block">+34 600 482 119</span>
+                                                            <span className="text-[10px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded uppercase tracking-wider">WhatsApp Opt-in</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Ciudad</span>
+                                                        <span className="font-medium text-[#18181B]">Madrid, España</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Apps activas</span>
+                                                        <span className="font-medium text-[#18181B]">iOS · Spotify linked</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Idioma preferido</span>
+                                                        <span className="font-medium text-[#18181B]">Español</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Behavioral Card */}
+                                            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                                                <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+                                                    <h4 className="font-bold text-[#E9007F] text-[14px] flex items-center gap-2">
+                                                        <i className="fa-solid fa-chart-line text-[#C026D3]"></i> Patrón de comportamiento
+                                                    </h4>
+                                                    <span className="bg-pink-50 text-[#C026D3] text-[10px] font-bold px-2 py-0.5 rounded-full">Inferido</span>
+                                                </div>
+                                                <div className="space-y-3 flex-1 text-[13px]">
+                                                    <div className="flex items-start gap-3 p-2 bg-gray-50/50 rounded-lg">
+                                                        <i className="fa-solid fa-music text-[#E9007F] mt-1"></i>
+                                                        <div className="flex-1">
+                                                            <p className="font-bold text-[#18181B]">3+ entradas mismo género</p>
+                                                            <p className="text-[11px] text-gray-500">Pop electrónico recurrente</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-start gap-3 p-2 bg-gray-50/50 rounded-lg">
+                                                        <i className="fa-solid fa-people-group text-[#E9007F] mt-1"></i>
+                                                        <div className="flex-1">
+                                                            <p className="font-bold text-[#18181B]">Compra siempre 2 tickets</p>
+                                                            <p className="text-[11px] text-gray-500">Patrón en pareja consistente</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-start gap-3 p-2 bg-gray-50/50 rounded-lg">
+                                                        <i className="fa-solid fa-crown text-[#E9007F] mt-1"></i>
+                                                        <div className="flex-1">
+                                                            <p className="font-bold text-[#18181B]">VIP en último evento</p>
+                                                            <p className="text-[11px] text-gray-500">Alta propensión a upgrades</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-start gap-3 p-2 bg-gray-50/50 rounded-lg">
+                                                        <i className="fa-regular fa-clock text-[#E9007F] mt-1"></i>
+                                                        <div className="flex-1">
+                                                            <p className="font-bold text-[#18181B]">Compra 2 semanas antes</p>
+                                                            <p className="text-[11px] text-gray-500">Decisión planificada, no impulsiva</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-start gap-3 p-2 bg-gray-50/50 rounded-lg">
+                                                        <i className="fa-solid fa-train text-[#E9007F] mt-1"></i>
+                                                        <div className="flex-1">
+                                                            <p className="font-bold text-[#18181B]">Asiste en MAD + BCN</p>
+                                                            <p className="text-[11px] text-gray-500">Mobility entre ciudades activa</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* CONTENIDO: DEMAND PREDICTION */}
+                                {activeTopTab === 'demand' && (
+                                    <div className="p-5 flex-1 flex flex-col fade-in overflow-y-auto bg-gradient-to-br from-[#FF2D95]/5 to-[#C026D3]/5">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div>
+                                                <h3 className="font-bold text-[#E9007F] flex items-center gap-2"><i className="fa-solid fa-chart-line"></i> Demand Prediction Agent · Madrid</h3>
+                                                <p className="text-[12px] text-gray-500 mt-1">Agentforce detecta señal de demanda alta para Aurora Nights en Madrid antes del lanzamiento público.</p>
+                                            </div>
+                                            <span className="bg-[#FF2D95] text-white text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-widest animate-pulse">🔴 Live</span>
+                                        </div>
+
+                                        {/* Métricas */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+                                            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                                                <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Señal de demanda</p>
+                                                <p className="text-2xl font-bold fever-gradient-text">ALTA</p>
+                                                <p className="text-[10px] text-gray-400 mt-1">+312% vs baseline</p>
+                                            </div>
+                                            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                                                <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Audiencia potencial</p>
+                                                <p className="text-2xl font-bold text-[#18181B]">45.000</p>
+                                                <p className="text-[10px] text-gray-400 mt-1">Afinidad máxima · Madrid</p>
+                                            </div>
+                                            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                                                <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Capacidad venue</p>
+                                                <p className="text-2xl font-bold text-[#18181B]">8.000</p>
+                                                <p className="text-[10px] text-amber-500 mt-1 font-bold">Fill rate proyectado: 94%</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Recomendaciones agente */}
+                                        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm mb-4">
+                                            <p className="text-[11px] font-bold uppercase tracking-widest text-[#E9007F] mb-3 flex items-center gap-2"><i className="fa-solid fa-wand-magic-sparkles"></i> Recomendaciones del agente</p>
+                                            <ul className="space-y-2.5 text-[13px]">
+                                                <li className="flex items-start gap-3"><i className="fa-solid fa-check-double text-[#22C55E] mt-1"></i><span className="text-gray-700"><strong className="text-[#18181B]">Incrementar presupuesto paid media en Madrid +40%</strong></span></li>
+                                                <li className="flex items-start gap-3"><i className="fa-solid fa-check-double text-[#22C55E] mt-1"></i><span className="text-gray-700"><strong className="text-[#18181B]">Activar audiencia lookalike</strong> · Superfan Pop Electrónico Madrid</span></li>
+                                                <li className="flex items-start gap-3"><i className="fa-solid fa-check-double text-[#22C55E] mt-1"></i><span className="text-gray-700"><strong className="text-[#18181B]">Abrir lista de espera</strong> para capturar sobredemanda</span></li>
+                                                <li className="flex items-start gap-3"><i className="fa-solid fa-check-double text-[#22C55E] mt-1"></i><span className="text-gray-700"><strong className="text-[#18181B]">Evaluar segunda fecha</strong> · Fill rate proyectado 94%</span></li>
+                                            </ul>
+                                        </div>
+
+                                        {/* Mensaje cierre */}
+                                        <div className="bg-[#0A0A0C] rounded-xl p-4 text-white relative overflow-hidden">
+                                            <div className="absolute -top-12 -right-12 w-40 h-40 bg-[#E9007F] opacity-20 rounded-full blur-3xl pointer-events-none"></div>
+                                            <p className="text-[13px] leading-relaxed relative">
+                                                <i className="fa-solid fa-quote-left text-[#FF2D95] mr-1.5"></i>
+                                                La <strong className="text-white">Secret Media Network</strong> de Fever predice demanda. <strong className="fever-gradient-text">Agentforce</strong> la convierte en acción automática.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* CONTENIDO: SESIONES AGENTFORCE */}
+                                {activeTopTab === 'live_chat' && !selectedChat && (
+                                    <div className="p-5 flex-1 flex flex-col fade-in">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="font-bold text-[#E9007F] flex items-center gap-2">
+                                                <i className="fa-regular fa-comments text-gray-400"></i> Sesiones Agentforce
+                                            </h3>
+                                            <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-full border border-gray-200">{chatSessions.length} Sesiones</span>
+                                        </div>
+
+                                        <div className="space-y-4 overflow-y-auto flex-1 pr-2">
+                                            {chatSessions.map((session) => (
+                                                <div key={session.id} className="border border-gray-200 rounded-lg p-4 hover:border-[#E9007F] hover:shadow-sm transition bg-white flex flex-col gap-3">
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="text-sm font-bold text-[#E9007F]">{session.title}</span>
+                                                                <span className="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 text-gray-600 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                                                    {session.channel === 'WhatsApp' ? <i className="fa-brands fa-whatsapp text-[#25D366]"></i> :
+                                                                     session.channel === 'Web App' ? <i className="fa-solid fa-globe text-blue-500"></i> :
+                                                                     session.channel === 'App Fever' ? <i className="fa-solid fa-mobile-screen text-[#E9007F]"></i> :
+                                                                     <i className="fa-regular fa-envelope text-gray-500"></i>} {session.channel}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-[11px] text-gray-400"><i className="fa-regular fa-clock mr-1"></i> {session.date}</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setSelectedChat(session)}
+                                                            className="text-xs font-bold text-[#C026D3] bg-pink-50 border border-pink-200 px-3 py-1.5 rounded hover:fever-gradient hover:text-white hover:border-transparent transition shadow-sm">
+                                                            Ver transcripción
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-[12px] text-gray-600 leading-relaxed bg-gray-50 p-3 rounded border border-gray-100">
+                                                        <strong className="text-gray-700 font-medium">Resumen IA:</strong> {session.summary}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* CONTENIDO: TRANSCRIPCIÓN */}
+                                {activeTopTab === 'live_chat' && selectedChat && (
+                                    <div className="flex-1 flex flex-col fade-in overflow-hidden h-full">
+                                        <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50 shrink-0">
+                                            <div className="flex items-center gap-4">
+                                                <button
+                                                    onClick={() => setSelectedChat(null)}
+                                                    className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center hover:bg-gray-200 transition text-gray-600 shadow-sm">
+                                                    <i className="fa-solid fa-arrow-left text-xs"></i>
+                                                </button>
+                                                <div>
+                                                    <h4 className="font-bold text-[#E9007F] text-sm leading-tight">{selectedChat.title}</h4>
+                                                    <span className="text-[10px] text-gray-500 font-medium">{selectedChat.date} • {selectedChat.channel}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 bg-white px-2 py-1 rounded border border-gray-200">
+                                                <i className="fa-solid fa-file-lines"></i> Transcripción
+                                            </div>
+                                        </div>
+
+                                        <div className="p-5 flex-1 overflow-y-auto bg-white space-y-4">
+                                            {selectedChat.transcript.map((msg, idx) => (
+                                                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                    {msg.role === 'agent' && (
+                                                        <div className="w-6 h-6 rounded-full fever-gradient flex items-center justify-center shrink-0 mr-2 mt-1 shadow-sm">
+                                                            <i className="fa-solid fa-bolt text-white text-[10px]"></i>
+                                                        </div>
+                                                    )}
+
+                                                    <div className={`max-w-[85%] px-3.5 py-2.5 text-[12px] leading-relaxed shadow-sm ${
+                                                        msg.role === 'user'
+                                                            ? 'bg-gray-100 text-[#18181B] border border-gray-200 rounded-2xl rounded-tr-sm font-medium'
+                                                            : 'bg-pink-50/50 border border-pink-200 text-[#202124] rounded-2xl rounded-tl-sm'
+                                                    }`}>
+                                                        {msg.text}
+                                                    </div>
+
+                                                    {msg.role === 'user' && (
+                                                        <div className="w-6 h-6 rounded-full fever-gradient text-white flex items-center justify-center shrink-0 ml-2 mt-1 font-bold text-[10px] shadow-sm">
+                                                            E
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* BOTTOM CARD: Customer Affinities / Insights */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col shrink-0">
+                                <div className="flex border-b border-gray-200 px-2 pt-2">
+                                    <button
+                                        onClick={() => setActiveBottomTab('affinities')}
+                                        className={`px-4 py-3 text-sm transition-colors ${activeBottomTab === 'affinities' ? 'tab-active' : 'tab-inactive'}`}>
+                                        Afinidades
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveBottomTab('insights')}
+                                        className={`px-4 py-3 text-sm transition-colors ${activeBottomTab === 'insights' ? 'tab-active' : 'tab-inactive'}`}>
+                                        Insights
+                                    </button>
+                                </div>
+
+                                {/* AFINIDADES */}
+                                {activeBottomTab === 'affinities' && (
+                                    <div className="p-5 flex-1 fade-in">
+                                        <div className="flex items-center gap-4 mb-6 text-sm text-gray-600">
+                                            <span>Mostrando Top en:</span>
+                                            <select className="border border-gray-300 rounded-md px-3 py-1.5 outline-none focus:border-[#E9007F] bg-white">
+                                                <option>Categoría / Vibe</option>
+                                            </select>
+                                            <span className="ml-2">Por:</span>
+                                            <select className="border border-gray-300 rounded-md px-3 py-1.5 outline-none focus:border-[#E9007F] bg-white">
+                                                <option>Interacciones Zero-Party</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-5 max-w-2xl">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-[180px] shrink-0 text-right font-medium text-[#18181B] text-sm">Madrid events</div>
+                                                <div className="flex-1 bg-gray-100 h-6 rounded-sm overflow-hidden flex">
+                                                    <div className="fever-gradient h-full flex items-center justify-end px-3 text-white text-xs font-bold" style={{width: '97%'}}>97</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-[180px] shrink-0 text-right font-medium text-[#18181B] text-sm">Música electrónica</div>
+                                                <div className="flex-1 bg-gray-100 h-6 rounded-sm overflow-hidden flex">
+                                                    <div className="fever-gradient h-full flex items-center justify-end px-3 text-white text-xs font-bold" style={{width: '96%'}}>96</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-[180px] shrink-0 text-right font-medium text-[#18181B] text-sm">Compra en pareja</div>
+                                                <div className="flex-1 bg-gray-100 h-6 rounded-sm overflow-hidden flex">
+                                                    <div className="fever-gradient h-full flex items-center justify-end px-3 text-white text-xs font-bold" style={{width: '94%'}}>94</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-[180px] shrink-0 text-right font-medium text-[#18181B] text-sm">Experiencias nocturnas</div>
+                                                <div className="flex-1 bg-gray-100 h-6 rounded-sm overflow-hidden flex">
+                                                    <div className="fever-gradient h-full flex items-center justify-end px-3 text-white text-xs font-bold" style={{width: '91%'}}>91</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-[180px] shrink-0 text-right font-medium text-[#18181B] text-sm">Experiencias premium</div>
+                                                <div className="flex-1 bg-gray-100 h-6 rounded-sm overflow-hidden flex">
+                                                    <div className="fever-gradient h-full flex items-center justify-end px-3 text-white text-xs font-bold" style={{width: '88%'}}>88</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-[180px] shrink-0 text-right font-medium text-[#18181B] text-sm">Barcelona mobility</div>
+                                                <div className="flex-1 bg-gray-100 h-6 rounded-sm overflow-hidden flex">
+                                                    <div className="fever-gradient h-full flex items-center justify-end px-3 text-white text-xs font-bold" style={{width: '74%'}}>74</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-6 italic"><i className="fa-solid fa-sparkles text-[#E9007F] mr-1"></i> Datos extraídos automáticamente de las interacciones conversacionales y de compra del fan en Data Cloud.</p>
+                                    </div>
+                                )}
+
+                                {/* INSIGHTS */}
+                                {activeBottomTab === 'insights' && (
+                                    <div className="p-5 flex-1 fade-in overflow-y-auto">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <FeverLogoIcon className="w-5 h-5" />
+                                            <h3 className="font-bold text-[#E9007F] text-sm uppercase tracking-wide">Insights accionables Agentforce</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
+
+                                            {/* Insight 1: NBA completada */}
+                                            <div className="bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-200 rounded-lg p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                                                <div className="absolute top-0 right-0 w-16 h-16 bg-[#E9007F] opacity-5 rounded-bl-full"></div>
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <i className="fa-solid fa-bullseye text-[#E9007F]"></i>
+                                                        <h4 className="font-bold text-[#18181B] text-[13px]">NBA completada · WhatsApp → App</h4>
+                                                    </div>
+                                                    <p className="text-xs text-gray-700 leading-relaxed">
+                                                        Tras detectar abandono web con carrito guardado, Agentforce ejecutó <strong>retargeting WhatsApp</strong> con deeplink seguro a la app. Resultado: <strong>conversión completada en app</strong> · Carrito FEV-49281 confirmado · <strong className="fever-gradient-text">VIP upsell activado · +70€ ancillary</strong>.
+                                                    </p>
+                                                </div>
+                                                <button className="mt-4 text-[10px] w-fit bg-white border border-[#22C55E] text-[#16a34a] px-3 py-1.5 rounded font-bold shadow-sm cursor-default">✓ JOURNEY CERRADO</button>
+                                            </div>
+
+                                            {/* Insight 2: VIP Upsell */}
+                                            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <i className="fa-solid fa-crown text-[#C026D3]"></i>
+                                                    <h4 className="font-bold text-[#18181B] text-[13px]">Oportunidad completada · VIP upsell</h4>
+                                                </div>
+                                                <p className="text-xs text-gray-700 leading-relaxed">
+                                                    Recomendación VIP basada en <strong>compra premium previa</strong> y <strong>patrón en pareja</strong>. Elena aceptó el upgrade, generando <strong>+70,00€ de ancillary revenue</strong>. Demostración directa de cómo Agentforce convierte señales de Data Cloud en upgrades reales.
+                                                </p>
+                                            </div>
+
+                                            {/* Insight 3: Canal preferido */}
+                                            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <i className="fa-brands fa-whatsapp text-[#25D366]"></i>
+                                                    <h4 className="font-bold text-[#18181B] text-[13px]">Canal de mayor conversión</h4>
+                                                </div>
+                                                <p className="text-xs text-gray-700 leading-relaxed">
+                                                    <strong>WhatsApp</strong> con tasa de respuesta inmediata: ideal para retargeting tras abandono y entrega de deeplinks seguros. <strong>Email</strong> origen del journey, <strong>web</strong> revisión y <strong>app</strong> conversión final. <em>Un BSP da un canal · Salesforce da una plataforma.</em>
+                                                </p>
+                                            </div>
+
+                                            {/* Insight 4: Loyalty progression */}
+                                            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <i className="fa-solid fa-bolt text-[#00D4FF]"></i>
+                                                    <h4 className="font-bold text-[#18181B] text-[13px]">Loyalty progression · Fever Insider</h4>
+                                                </div>
+                                                <p className="text-xs text-gray-700 leading-relaxed">
+                                                    <strong>Fever Insider +1 evento</strong> registrado. Loyalty Management actualiza progreso, desbloquea early access para próximos eventos similares y refuerza microsegmento <strong>Superfan Pop Electrónico Madrid</strong>. El ticket es solo el principio del journey.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-5 bg-[#0A0A0C] rounded-xl p-4 text-white max-w-3xl relative overflow-hidden">
+                                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#E9007F] opacity-15 rounded-full blur-3xl pointer-events-none"></div>
+                                            <p className="text-[13px] leading-relaxed relative">
+                                                <i className="fa-solid fa-quote-left text-[#FF2D95] mr-1.5"></i>
+                                                <strong className="text-white">Data Cloud infiere afinidad. Agentforce Marketing activa. Agentforce ejecuta.</strong> Fever puede ser el primer <span className="fever-gradient-text font-bold">Agentic Entertainment Enterprise</span>.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                        </div>
+
+                        {/* COLUMN 3: OMNICHANNEL JOURNEY (Right) */}
+                        <div className="w-1/5 bg-white rounded-xl shadow-sm border border-gray-200 shrink-0 flex flex-col overflow-hidden">
+                            <div className="p-5 border-b border-gray-100 flex items-center gap-2">
+                                <i className="fa-solid fa-route text-gray-400 text-lg"></i>
+                                <h2 className="font-bold text-lg text-[#E9007F]">Customer Journey</h2>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-5">
+                                <div className="relative border-l-2 border-gray-100 ml-4 mt-2 pb-4 space-y-7">
+
+                                    {/* Timeline 1: App · Conversión final */}
+                                    <div className="relative pl-6">
+                                        <div className="absolute -left-[17px] top-2 w-8 h-8 fever-gradient border border-[#E9007F] rounded-full flex items-center justify-center z-10 shadow-md shadow-[#E9007F]/30">
+                                            <i className="fa-solid fa-mobile-screen text-white text-[13px]"></i>
+                                        </div>
+                                        <div className="bg-white border border-[#E9007F] rounded-xl p-4 shadow-sm">
+                                            <div className="flex justify-between items-start mb-1.5">
+                                                <span className="text-[10px] font-bold fever-gradient-text uppercase tracking-wide">App · Purchase confirmed</span>
+                                                <span className="text-[10px] text-gray-400">Hoy · 19:18</span>
+                                            </div>
+                                            <h4 className="font-bold text-[#18181B] text-[14px] mb-1.5">Pago confirmado · FEV-49281</h4>
+                                            <p className="text-[12px] text-gray-600 mb-3 leading-relaxed">Elena paga 178,00€ con Apple Pay. 2 entradas GA + VIP Experience confirmadas. Notificación in-app enviada · Fever Insider +1.</p>
+                                            <div className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 text-gray-600 text-[10px] font-medium px-2.5 py-1 rounded">
+                                                <i className="fa-solid fa-mobile-screen text-[#E9007F]"></i> App Fever
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Timeline 2: WhatsApp retargeting */}
+                                    <div className="relative pl-6">
+                                        <div className="absolute -left-[17px] top-0 w-8 h-8 fever-gradient rounded-full flex items-center justify-center z-10 shadow-sm">
+                                            <i className="fa-solid fa-bolt text-white text-[12px]"></i>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-start mb-0.5">
+                                                <h4 className="font-bold text-[#18181B] text-[14px]">Retargeting WhatsApp + deeplink</h4>
+                                                <span className="text-[10px] text-gray-400 mt-0.5">Hoy · 19:14</span>
+                                            </div>
+                                            <p className="text-[12px] text-gray-600 mb-2 leading-relaxed">Fever Agentforce detecta abandono web y envía mensaje proactivo por WhatsApp con deeplink seguro al checkout en la app.</p>
+                                            <div className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 text-gray-600 text-[10px] font-medium px-2.5 py-1 rounded">
+                                                <i className="fa-brands fa-whatsapp text-[#25D366]"></i> WhatsApp
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Timeline 3: Web abandonment */}
+                                    <div className="relative pl-6">
+                                        <div className="absolute -left-[17px] top-0 w-8 h-8 bg-white border border-amber-500 rounded-full flex items-center justify-center z-10">
+                                            <i className="fa-solid fa-bookmark text-amber-500 text-[13px]"></i>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-start mb-0.5">
+                                                <h4 className="font-bold text-[#18181B] text-[14px]">Abandono web · Carrito guardado</h4>
+                                                <span className="text-[10px] text-gray-400 mt-0.5">Hoy · 14:31</span>
+                                            </div>
+                                            <p className="text-[12px] text-gray-600 leading-relaxed">Elena abandona feverup.com sin finalizar la compra. Se conserva el carrito FEV-49281 y todas las preferencias para retomarlo.</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Timeline 4: Web · Recommendations */}
+                                    <div className="relative pl-6">
+                                        <div className="absolute -left-[17px] top-0 w-8 h-8 fever-gradient rounded-full flex items-center justify-center z-10 shadow-sm">
+                                            <i className="fa-solid fa-bolt text-white text-[12px]"></i>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-start mb-0.5">
+                                                <h4 className="font-bold text-[#18181B] text-[14px]">Recomendaciones personalizadas</h4>
+                                                <span className="text-[10px] text-gray-400 mt-0.5">Hoy · 14:28</span>
+                                            </div>
+                                            <p className="text-[12px] text-gray-600 mb-2 leading-relaxed">Fever Agentforce mantiene contexto del email y propone 3 recomendaciones: VIP Experience, After-party oficial y Fever Insider. Elena añade VIP al carrito.</p>
+                                            <div className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 text-gray-600 text-[10px] font-medium px-2.5 py-1 rounded">
+                                                <i className="fa-solid fa-globe text-blue-500"></i> Web Fever
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Timeline 5: Email Agent */}
+                                    <div className="relative pl-6">
+                                        <div className="absolute -left-[17px] top-0 w-8 h-8 fever-gradient rounded-full flex items-center justify-center z-10 shadow-sm">
+                                            <i className="fa-solid fa-bolt text-white text-[12px]"></i>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-start mb-0.5">
+                                                <h4 className="font-bold text-[#18181B] text-[14px]">Email Agent conversation</h4>
+                                                <span className="text-[10px] text-gray-400 mt-0.5">Hoy · 14:08</span>
+                                            </div>
+                                            <p className="text-[12px] text-gray-600 mb-2 leading-relaxed">Elena responde al email. Fever Agentforce recomienda Aurora Nights y prepara propuesta personalizada con CTA a la web.</p>
+                                            <div className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 text-gray-600 text-[10px] font-medium px-2.5 py-1 rounded">
+                                                <i className="fa-regular fa-envelope"></i> Email Agent
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Timeline 6: Email campaign */}
+                                    <div className="relative pl-6">
+                                        <div className="absolute -left-[17px] top-0 w-8 h-8 bg-white border border-gray-300 rounded-full flex items-center justify-center z-10">
+                                            <i className="fa-regular fa-envelope text-gray-400 text-[13px]"></i>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-start mb-0.5">
+                                                <h4 className="font-bold text-[#18181B] text-[14px]">Email campaign · Aurora Nights</h4>
+                                                <span className="text-[10px] text-gray-400 mt-0.5">Hoy · 10:42</span>
+                                            </div>
+                                            <p className="text-[12px] text-gray-600 leading-relaxed">Apertura de campaña 'Aurora Nights · Madrid' segmentada para Live Addict con afinidad pop electrónico y patrón en pareja.</p>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<DataCloudDashboard />);
+    </script>
+</body>
+</html>

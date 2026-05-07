@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JUNGLE en Movistar Arena Madrid · Fever</title>
+    <!-- Favicon -->
+    <link rel="icon" href="https://feverup.com/logo/fever-logo-black.svg" type="image/svg+xml">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0A0A0C; color: #E4E4E7; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3F3F46; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #52525B; }
+
+        .fade-in { animation: fadeIn 0.4s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .chat-textarea {
+            resize: none;
+            min-height: 44px;
+            max-height: 150px;
+            line-height: 1.5;
+            transition: height 0.1s ease;
+        }
+
+        .booking-link { color: #FF2D95; text-decoration: none; transition: all 0.2s; }
+        .booking-link:hover { text-decoration: underline; }
+
+        .fever-gradient { background: linear-gradient(135deg, #E9007F 0%, #C026D3 100%); }
+        .fever-gradient-text {
+            background: linear-gradient(135deg, #FF2D95 0%, #C026D3 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .fever-logo-circle {
+            background: linear-gradient(135deg, #E9007F 0%, #C026D3 100%);
+            color: white;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+        }
+
+        .card-dark { background-color: #18181B; border: 1px solid #27272A; }
+        .card-darker { background-color: #0E0E10; border: 1px solid #27272A; }
+
+        @keyframes pulseDot {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(233,0,127,0.7); }
+            50% { box-shadow: 0 0 0 8px rgba(233,0,127,0); }
+        }
+        .pulse-dot { animation: pulseDot 1.6s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const FEVER_MAGENTA = "#E9007F";
+        const FEVER_LOGO = "https://feverup.com/logo/fever-logo-black.svg";
+        const PRODUCT_IMG = "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1400&q=80";
+
+        // Logo Fever oficial (SVG). Invert opcional para fondos oscuros.
+        const FeverLogo = ({ className = "h-6", invert = false }) => (
+            <img
+                src={FEVER_LOGO}
+                alt="Fever"
+                className={`${className} object-contain`}
+                style={invert ? { filter: 'brightness(0) invert(1)' } : {}}
+            />
+        );
+
+        // Icono de marca dentro de círculo (para chat avatar y similares)
+        const FeverIcon = ({ size = "w-full h-full" }) => (
+            <div className={`${size} bg-black rounded-full flex items-center justify-center`}>
+                <FeverLogo className="w-3/5 h-auto" invert />
+            </div>
+        );
+
+        const PRODUCT_DATA = {
+            event: "JUNGLE en Movistar Arena Madrid",
+            shortName: "JUNGLE",
+            artist: "Electronic Funk · Soul · Live Show",
+            alternativeEvent: "Tame Impala en Movistar Arena Madrid",
+            sku: "EVT-JUNGLE-MAD-150625",
+            orderRef: "FEV-49281",
+            tickets: "2 entradas General Admission",
+            shortDesc: "15 jun · Madrid · Movistar Arena Madrid · Electronic Funk",
+            doors: "Apertura puertas · 20:30",
+            highlights: "Electronic Funk · Soul · Live Show · Plan en pareja",
+            details: {
+                date: "15 de junio de 2026",
+                city: "Madrid",
+                venue: "Movistar Arena Madrid",
+                doors: "20:30",
+                end: "00:30",
+                ageLimit: "+16",
+                headline: "JUNGLE en Movistar Arena Madrid · Electronic Funk · Soul · Live Show.",
+                longDesc: "Plan moderno, urbano y bailable, perfecto para compartir en pareja. Un live show con sonido electrónico, funk y soul, en un venue de referencia en Madrid.",
+                images: [
+                    "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?auto=format&fit=crop&w=1200&q=80",
+                    "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80",
+                    "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=1200&q=80"
+                ],
+                amenities: [
+                    { icon: 'fa-music', name: 'Electronic Funk' },
+                    { icon: 'fa-headphones', name: 'Live Show' },
+                    { icon: 'fa-clock', name: '20:30 - 00:30' },
+                    { icon: 'fa-location-dot', name: 'Movistar Arena' },
+                    { icon: 'fa-people-group', name: 'Plan en pareja' },
+                    { icon: 'fa-champagne-glasses', name: 'After-party' },
+                    { icon: 'fa-id-card', name: '+16' }
+                ]
+            },
+            includedServices: [
+                "Acceso al recinto · JUNGLE en Movistar Arena Madrid",
+                "2 entradas General Admission seleccionadas",
+                "Cancelación flexible 48h antes del evento",
+                "Tickets digitales con QR en la app de Fever"
+            ],
+            basePrice: 108.00,
+            originalPrice: 108.00,
+            discount: 0,
+            extras: []
+        };
+
+        const PREMIUM_SERVICES = [
+            {
+                id: 'vip_experience',
+                title: 'VIP EXPERIENCE',
+                price: '+35,00 € por persona',
+                image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80',
+                shortDesc: 'Acceso prioritario, zona reservada y una experiencia más cómoda durante el evento.',
+                desc: 'Mejora tu noche con una experiencia VIP diseñada para fans que buscan comodidad, acceso rápido y mejor visibilidad. Ideal para Elena, que suele comprar en pareja y muestra alta propensión a experiencias premium.',
+                includes: [
+                    'Acceso prioritario al venue',
+                    'Zona reservada con mejor visibilidad',
+                    'Copa de bienvenida incluida',
+                    'Atención preferente en acceso'
+                ],
+                comments: 'Recomendado por Agentforce porque Elena compró una opción premium en su último evento y muestra alta afinidad por experiencias nocturnas.',
+                tags: ['Alta propensión VIP', 'Upgrade recomendado'],
+                unitPrice: 70 // 2 personas × 35€
+            },
+            {
+                id: 'official_afterparty',
+                title: 'AFTER-PARTY OFICIAL',
+                price: '+45,00 € por persona',
+                image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80',
+                shortDesc: 'Continúa la noche con acceso exclusivo al after-party oficial del evento.',
+                desc: 'Una recomendación diseñada para extender el valor más allá del ticket. El after-party permite a Elena convertir el evento en una experiencia completa y aumenta el ancillary revenue por asistente.',
+                includes: [
+                    'Acceso al after-party oficial',
+                    'Ambiente exclusivo para asistentes seleccionados',
+                    'Entrada válida para 2 personas',
+                    'Disponibilidad limitada'
+                ],
+                comments: 'Recomendado para fans con alta afinidad por experiencias nocturnas y planes sociales.',
+                tags: ['Ancillary revenue', 'Disponibilidad limitada'],
+                unitPrice: 90 // 2 personas × 45€
+            },
+            {
+                id: 'fever_insider',
+                title: 'FEVER INSIDER',
+                price: '+9,99 € · activación',
+                image: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=800&q=80',
+                shortDesc: 'Beneficios personalizados, early access y progreso hacia tiers superiores.',
+                desc: 'Fever Insider convierte cada compra en una relación continua. Elena acumula progreso por asistencia, upgrades y engagement, desbloqueando acceso anticipado, beneficios VIP y recomendaciones cada vez más precisas.',
+                includes: [
+                    'Acceso anticipado a eventos seleccionados',
+                    'Progreso hacia tier Fever Regular',
+                    'Recomendaciones personalizadas por afinidad',
+                    'Beneficios futuros en experiencias premium'
+                ],
+                comments: 'Este bloque demuestra cómo Loyalty Management + Data Cloud + Agentforce convierten cada ticket en una relación de largo plazo.',
+                tags: ['Loyalty Management', 'Fever Insider'],
+                unitPrice: 9.99
+            }
+        ];
+
+        function App() {
+          const [isChatOpen, setIsChatOpen] = useState(false);
+          const [latestAddedExtra, setLatestAddedExtra] = useState(null);
+          const [selectedRecommendation, setSelectedRecommendation] = useState(null);
+
+          // Estados omnicanal mock (reflejan abandono y retargeting WhatsApp)
+          const [cartStatus, setCartStatus] = useState("active"); // active | abandoned | converted
+          const [budgetStatus, setBudgetStatus] = useState("draft"); // draft | saved
+          const [lastChannel, setLastChannel] = useState("email"); // email | web | whatsapp | app
+          const [nextBestAction, setNextBestAction] = useState(null); // retarget_whatsapp
+
+          // Estado dinámico del producto
+          const [addedExtras, setAddedExtras] = useState(PRODUCT_DATA.extras);
+
+          // Acordeones
+          const [isStayOpen, setIsStayOpen] = useState(false);
+          const [isRoomOpen, setIsRoomOpen] = useState(false);
+          const [isPriceOpen, setIsPriceOpen] = useState(false);
+
+          // Carrusel
+          const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+          // Widget flotante de servicios premium
+          const [showServicesWidget, setShowServicesWidget] = useState(false);
+          const [expandedServiceId, setExpandedServiceId] = useState(null);
+
+          const [messages, setMessages] = useState([]);
+          const [inputText, setInputText] = useState('');
+          const [isTyping, setIsTyping] = useState(false);
+          const [demoStep, setDemoStep] = useState(0);
+
+          const [isSimulatingInput, setIsSimulatingInput] = useState(false);
+          const [isWaitingForAgentTrigger, setIsWaitingForAgentTrigger] = useState(false);
+
+          const skipInputTypingRef = useRef(false);
+          const typingTimeoutRef = useRef(null);
+          const textareaRef = useRef(null);
+          const chatEndRef = useRef(null);
+          const lastMessageRef = useRef(null);
+
+          const currentStepRef = useRef(0);
+          useEffect(() => { currentStepRef.current = demoStep; }, [demoStep]);
+
+          // Función para simular tecleo en el input
+          const startTypingInput = (fullText, nextStep) => {
+              setIsSimulatingInput(true);
+              skipInputTypingRef.current = false;
+              let i = 0;
+              const typeNextChar = () => {
+                  if (skipInputTypingRef.current) {
+                      setInputText(fullText);
+                      setIsSimulatingInput(false);
+                      setDemoStep(nextStep);
+                      return;
+                  }
+                  if (i <= fullText.length) {
+                      setInputText(fullText.substring(0, i));
+                      i++;
+                      typingTimeoutRef.current = setTimeout(typeNextChar, 15 + Math.random() * 15);
+                  } else {
+                      setIsSimulatingInput(false);
+                      setDemoStep(nextStep);
+                  }
+              };
+              typeNextChar();
+          };
+
+          useEffect(() => {
+              const lastMessage = messages[messages.length - 1];
+
+              const performScroll = () => {
+                  if (!isTyping && lastMessage?.role === 'agent' && lastMessageRef.current) {
+                      lastMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+                      return;
+                  }
+                  chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+              };
+
+              if (isChatOpen) {
+                  performScroll();
+                  const timeoutId = setTimeout(performScroll, 150);
+                  return () => clearTimeout(timeoutId);
+              }
+          }, [messages, isTyping, isChatOpen]);
+
+          useEffect(() => {
+              if (textareaRef.current) {
+                  textareaRef.current.style.height = 'auto';
+                  textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+              }
+          }, [inputText]);
+
+          useEffect(() => {
+              if (isChatOpen) {
+                  if (demoStep === 0) {
+                      setIsTyping(true);
+                      setIsWaitingForAgentTrigger(true);
+                  }
+              }
+          }, [isChatOpen]);
+
+          const triggerAgentResponse = () => {
+              const step = currentStepRef.current;
+              setIsTyping(false);
+              setIsWaitingForAgentTrigger(false);
+
+              if (step === 0) {
+                  setMessages([{
+                    role: 'agent',
+                    text: '¡Hola Elena! 👋 Aquí tienes tu propuesta para **JUNGLE en Movistar Arena Madrid**.\n\nDe las dos opciones que vimos, **JUNGLE** es la que mejor encaja con un plan en pareja, social y bailable.\n\n¿Quieres que revisemos juntos la mejor combinación antes de decidir?'
+                  }]);
+                  setDemoStep(1);
+              } else if (step === 3) {
+                  setMessages(prev => [
+                    ...prev,
+                    {
+                        role: 'agent',
+                        text: 'Perfecto, Elena. Para que **JUNGLE** sea una noche completa pensada para ti y tu pareja, te propongo estas **3 mejoras**:\n\n• **VIP Experience**: acceso prioritario, zona reservada y mejor visibilidad.\n• **After-party oficial**: continúa la noche después del concierto en un entorno exclusivo.\n• **Fever Insider**: acceso anticipado a próximos eventos y ventajas personalizadas.'
+                    }
+                  ]);
+                  setDemoStep(4);
+                  setShowServicesWidget(true);
+              } else if (step === 7) {
+                  setMessages(prev => [...prev, {
+                    role: 'agent',
+                    text: 'Te dejo la **propuesta de JUNGLE guardada**, Elena. Cuando quieras retomarla, la tendrás lista tal y como la has dejado.'
+                  }]);
+                  setBudgetStatus("saved");
+                  setCartStatus("abandoned");
+                  setLastChannel("web");
+                  setNextBestAction("retarget_whatsapp");
+                  setDemoStep(8);
+              }
+          };
+
+          const handleSendMessage = (textOverride = null) => {
+            const textToSend = textOverride || inputText.trim();
+            if (!textToSend) return;
+
+            setMessages(prev => [...prev, { role: 'user', text: textToSend }]);
+            setInputText('');
+
+            let nextStep;
+            const currentStep = currentStepRef.current;
+
+            if (currentStep === 2) {
+                nextStep = 3;
+                setIsTyping(true);
+                setIsWaitingForAgentTrigger(true);
+            }
+            else if (currentStep === 6) {
+                nextStep = 7;
+                setIsTyping(true);
+                setIsWaitingForAgentTrigger(true);
+            }
+
+            setDemoStep(nextStep);
+          };
+
+          // --- AÑADIR RECOMENDACIÓN AL CARRITO ---
+          const handleAddToStay = (extra) => {
+              // Si ya está añadido, no hacemos nada
+              if (addedExtras.some(e => e.id === extra.id)) return;
+
+              const newExtra = {
+                  id: extra.id,
+                  name: extra.title,
+                  shortDesc: extra.shortDesc || 'Recomendación personalizada',
+                  desc: extra.desc,
+                  price: extra.unitPrice || 0,
+                  selected: true
+              };
+
+              // Calculamos el nuevo total incluyendo la recomendación recién añadida
+              const newExtras = [...addedExtras, newExtra];
+              const newTotal = PRODUCT_DATA.basePrice + newExtras.reduce((acc, curr) => acc + curr.price, 0);
+              const totalFormatted = newTotal.toLocaleString('es-ES', { minimumFractionDigits: 2 });
+
+              setAddedExtras(newExtras);
+              setExpandedServiceId(null);
+              setLatestAddedExtra(extra.title);
+              setSelectedRecommendation(extra.title);
+
+              // El agente confirma el add e informa del nuevo importe total
+              setMessages(prev => [...prev, {
+                  role: 'agent',
+                  text: `Perfecto, Elena. He añadido **${extra.title}** al paquete.\n\nTu importe total asciende ahora a **${totalFormatted} €**.\n\n¿Lo cerramos ahora y te aseguras tu plan?`
+              }]);
+
+              // Avanzamos al siguiente step solo en el primer add (para habilitar el cierre por teclado).
+              // Las recomendaciones adicionales se pueden seguir añadiendo desde el widget.
+              if (currentStepRef.current === 4) {
+                  setDemoStep(5);
+              }
+          };
+
+          useEffect(() => {
+            const handleKeyDown = (e) => {
+              if (e.key === "Alt" || e.key === "Control" || e.key === "Shift" || e.key === "Meta" || e.key === "Enter") return;
+
+              if (isWaitingForAgentTrigger) {
+                  e.preventDefault();
+                  triggerAgentResponse();
+                  return;
+              }
+
+              if (isSimulatingInput) {
+                  e.preventDefault();
+                  skipInputTypingRef.current = true;
+                  return;
+              }
+
+              const step = currentStepRef.current;
+
+              if (step === 2 || step === 6) {
+                  e.preventDefault();
+                  handleSendMessage();
+                  return;
+              }
+
+              if (step === 1 && isChatOpen) {
+                  e.preventDefault();
+                  startTypingInput("Sí, JUNGLE encaja mejor con el plan. Pero antes de comprar quiero entender si merece la pena añadir VIP o alguna experiencia adicional.", 2);
+              }
+              else if (step === 5 && isChatOpen) {
+                  e.preventDefault();
+                  startTypingInput("Voy a darle una vuelta y lo reviso con calma.", 6);
+              }
+            };
+
+            window.addEventListener('keydown', handleKeyDown);
+            return () => window.removeEventListener('keydown', handleKeyDown);
+          }, [isChatOpen, isSimulatingInput, isWaitingForAgentTrigger, demoStep]);
+
+          const handleNextImage = (e) => {
+              e.stopPropagation();
+              setCurrentImageIndex((prev) => (prev + 1) % PRODUCT_DATA.details.images.length);
+          };
+
+          const handlePrevImage = (e) => {
+              e.stopPropagation();
+              setCurrentImageIndex((prev) => (prev - 1 + PRODUCT_DATA.details.images.length) % PRODUCT_DATA.details.images.length);
+          };
+
+          const totalExtrasPrice = addedExtras.reduce((acc, curr) => acc + curr.price, 0);
+          const totalPrice = PRODUCT_DATA.basePrice + totalExtrasPrice;
+
+          return (
+            <div className="min-h-screen flex flex-col relative text-[#E4E4E7] bg-[#0A0A0C]">
+              <header className="bg-[#050505] sticky top-0 z-50 shadow-md border-b border-[#27272A]">
+                <div className={`mx-auto w-full px-4 lg:px-8 h-16 flex items-center justify-between transition-all duration-700 ease-in-out ${isChatOpen ? 'max-w-[1400px]' : 'max-w-4xl'}`}>
+                  <FeverLogo className="h-6" invert />
+                  <div className="flex items-center gap-6 text-white text-sm font-medium">
+                    <span className="hidden sm:flex items-center gap-2 text-gray-300"><i className="fa-solid fa-bolt text-xs text-[#FF2D95]"></i> Live Addict · Madrid</span>
+                    <span className="hidden sm:flex items-center gap-2 text-gray-300"><i className="fa-regular fa-circle-user text-lg text-[#FF2D95]"></i> Hola, Elena</span>
+                  </div>
+                </div>
+              </header>
+
+              <main className={`flex-1 mx-auto w-full p-4 lg:p-8 flex flex-col lg:flex-row gap-6 transition-all duration-700 ease-in-out ${isChatOpen ? 'max-w-[1400px]' : 'max-w-4xl'}`}>
+
+                {/* --- DETALLE DEL EVENTO (PANEL IZQUIERDO) --- */}
+                <div className={`w-full flex flex-col transition-all duration-700 ease-in-out ${isChatOpen ? 'lg:w-[75%]' : 'lg:w-[100%]'} relative`}>
+
+                  {/* --- WIDGET FLOTANTE AGENTFORCE: SERVICIOS PREMIUM --- */}
+                  {showServicesWidget && (
+                      <div className="sticky top-[88px] z-40 mb-6 fade-in shadow-2xl rounded-2xl overflow-hidden border-2 border-[#E9007F] bg-[#0E0E10]/98 backdrop-blur-md">
+                          <div className="bg-gradient-to-r from-[#E9007F] to-[#C026D3] text-white p-4 flex justify-between items-center shrink-0">
+                              <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0 overflow-hidden">
+                                      <i className="fa-solid fa-wand-magic-sparkles text-white text-[14px]"></i>
+                                  </div>
+                                  <div>
+                                      <span className="font-bold text-[14px] block">Recomendaciones para tu plan</span>
+                                      <span className="text-[11px] text-pink-100">VIP Experience · After-party oficial · Fever Insider</span>
+                                  </div>
+                              </div>
+                              <button onClick={() => setShowServicesWidget(false)} className="text-pink-100 hover:text-white"><i className="fa-solid fa-xmark text-lg"></i></button>
+                          </div>
+
+                          <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-5">
+                              {PREMIUM_SERVICES.map(extra => {
+                                  const isExpanded = expandedServiceId === extra.id;
+                                  const isHidden = expandedServiceId !== null && !isExpanded;
+
+                                  if (isHidden) return null;
+
+                                  return (
+                                      <div key={extra.id} className={`bg-[#18181B] border border-[#27272A] rounded-xl overflow-hidden shadow-sm flex ${isExpanded ? 'flex-col sm:flex-row sm:col-span-3' : 'flex-col'} transition-all duration-300 hover:shadow-md hover:border-[#E9007F]`}>
+                                          <img src={extra.image} alt={extra.title} className={`${isExpanded ? 'sm:w-1/3 h-48 sm:h-auto' : 'h-32 w-full'} object-cover`} />
+                                          <div className="p-5 flex-1 flex flex-col">
+
+                                              <div className="flex justify-between items-start mb-2">
+                                                  <h4 className="font-bold text-white text-[15px] uppercase tracking-wide">{extra.title}</h4>
+                                                  {isExpanded && <button onClick={() => setExpandedServiceId(null)} className="text-gray-400 hover:text-[#FF2D95] transition-colors"><i className="fa-solid fa-xmark text-lg"></i></button>}
+                                              </div>
+
+                                              <p className="text-[#FF2D95] font-bold text-[14px] mb-3">{extra.price} {isExpanded && <span className="text-gray-500 font-normal text-[11px]">aplicado al plan</span>}</p>
+
+                                              {isExpanded ? (
+                                                  <div className="fade-in mb-1 flex-1 flex flex-col">
+                                                      {extra.tags && (
+                                                          <div className="flex flex-wrap gap-2 mb-4">
+                                                              {extra.tags.map((tag, i) => <span key={i} className="text-[10px] bg-[#27272A] text-gray-300 px-2.5 py-1 rounded font-medium">{tag}</span>)}
+                                                          </div>
+                                                      )}
+                                                      <p className="text-[13px] text-gray-200 mb-4 leading-relaxed">{extra.desc}</p>
+
+                                                      {extra.includes && (
+                                                          <div className="mb-4">
+                                                              <h5 className="text-[13px] font-bold text-white mb-2">El upgrade incluye:</h5>
+                                                              <ul className="text-[13px] text-gray-300 space-y-1.5 pl-5 list-disc">
+                                                                  {extra.includes.map((inc, i) => <li key={i}>{inc}</li>)}
+                                                              </ul>
+                                                          </div>
+                                                      )}
+
+                                                      {extra.comments && (
+                                                          <p className="text-[11px] text-gray-500 mb-5"><strong className="text-gray-400">Notas:</strong> {extra.comments}</p>
+                                                      )}
+
+                                                      {/* RECOMENDACIÓN AGENTFORCE PARA VIP EXPERIENCE */}
+                                                      {extra.id === 'vip_experience' && (
+                                                          <div className="bg-gradient-to-br from-[#fdf2f8]/10 to-[#faf5ff]/10 border border-[#fbcfe8]/30 p-4 rounded-xl mb-5 flex gap-3.5 items-start shadow-sm">
+                                                              <div className="w-8 h-8 rounded-full fever-gradient flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
+                                                                  <i className="fa-solid fa-wand-magic-sparkles text-white text-[12px]"></i>
+                                                              </div>
+                                                              <div>
+                                                                  <p className="text-[13px] text-[#FF2D95] font-bold mb-1">Por qué te lo recomendamos</p>
+                                                                  <p className="text-[12px] text-gray-200 leading-relaxed">Esta sugerencia se basa en tu <strong className="text-white">afinidad por experiencias nocturnas premium</strong>, tu <strong className="text-white">patrón de compra en pareja</strong> y tu <strong className="text-white">compra previa de entradas de mayor valor</strong>.</p>
+                                                              </div>
+                                                          </div>
+                                                      )}
+
+                                                      <div className="mt-auto flex justify-between items-center pt-4 border-t border-[#27272A]">
+                                                          <button onClick={() => setExpandedServiceId(null)} className="text-[#FF2D95] text-[12px] font-bold hover:underline"><i className="fa-solid fa-arrow-left mr-1"></i> Volver</button>
+                                                          <button onClick={() => handleAddToStay(extra)} className="fever-gradient text-white font-bold py-2.5 px-6 rounded-lg text-[13px] hover:opacity-90 transition shadow-lg shadow-[#E9007F]/30 tracking-wide uppercase">Añadir al plan</button>
+                                                      </div>
+                                                  </div>
+                                              ) : (
+                                                  <div className="flex-1 flex flex-col">
+                                                      <p className="text-[12px] text-gray-400 mb-4 leading-relaxed flex-1 line-clamp-3">{extra.shortDesc || extra.desc}</p>
+                                                      <div className="mt-auto mb-4">
+                                                          <button onClick={() => setExpandedServiceId(extra.id)} className="text-[#FF2D95] text-[12px] font-bold hover:underline">Ver detalles</button>
+                                                      </div>
+                                                      <button onClick={() => handleAddToStay(extra)} className="w-full border border-[#E9007F] text-[#FF2D95] font-bold py-2 rounded-lg text-[12px] hover:fever-gradient hover:text-white hover:border-transparent transition-colors uppercase tracking-wider">Añadir al plan</button>
+                                                  </div>
+                                              )}
+                                          </div>
+                                      </div>
+                                  );
+                              })}
+                          </div>
+                      </div>
+                  )}
+
+                  {latestAddedExtra && (
+                      <div className="bg-gradient-to-br from-[#16a34a]/15 to-[#22c55e]/5 rounded-xl shadow-sm border border-[#22c55e]/30 px-6 py-5 mb-6 flex items-center gap-4 fade-in">
+                          <div className="w-12 h-12 bg-[#16a34a] rounded-full flex items-center justify-center shrink-0 text-white text-xl shadow-sm"><i className="fa-solid fa-check"></i></div>
+                          <div><h3 className="font-bold text-[#86EFAC] text-lg">Recomendación añadida al plan</h3><p className="text-green-200 text-sm">Se ha añadido <strong>{latestAddedExtra}</strong> y queda incluida en tu carrito.</p></div>
+                      </div>
+                  )}
+
+                  {budgetStatus === "saved" && (
+                      <div className="bg-gradient-to-br from-[#FF2D95]/10 to-[#C026D3]/5 rounded-xl shadow-sm border border-[#FF2D95]/40 px-6 py-5 mb-6 flex items-center gap-4 fade-in">
+                          <div className="w-12 h-12 fever-gradient rounded-full flex items-center justify-center shrink-0 text-white text-xl shadow-lg shadow-[#E9007F]/30"><i className="fa-solid fa-bookmark"></i></div>
+                          <div className="flex-1">
+                              <h3 className="font-bold text-white text-lg">Plan guardado · {PRODUCT_DATA.orderRef}</h3>
+                              <p className="text-gray-300 text-sm">Tu propuesta queda guardada. La tendrás lista cuando quieras volver a retomarla.</p>
+                          </div>
+                      </div>
+                  )}
+
+                  {/* 1. Cabecera del evento */}
+                  <div className="rounded-xl overflow-hidden mb-4 shadow-2xl border border-[#27272A] bg-[#0A0A0C] relative">
+                      <div className="relative h-48 sm:h-64 bg-black">
+                          <img src={PRODUCT_IMG} alt="JUNGLE en Movistar Arena Madrid" className="w-full h-full object-cover opacity-70" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
+                          <div className="absolute inset-0 flex flex-col justify-end p-5">
+                              <div className="flex items-center gap-2 mb-2">
+                                  <span className="bg-[#E9007F] text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-widest">Acceso anticipado</span>
+                                  <span className="bg-white/10 backdrop-blur text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-widest border border-white/20">Curado para ti</span>
+                              </div>
+                              <h1 className="text-[26px] sm:text-[34px] font-extrabold text-white mb-1 leading-tight tracking-tight">{PRODUCT_DATA.shortName}</h1>
+                              <p className="text-pink-200 text-[12px] sm:text-[14px] uppercase tracking-widest font-bold">Electronic Funk · Soul · Live Show</p>
+                              <div className="flex flex-wrap gap-2 mt-3 text-white text-[12px]">
+                                  <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded border border-white/15"><i className="fa-regular fa-calendar text-[#FF2D95]"></i> 15 jun</span>
+                                  <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded border border-white/15"><i className="fa-solid fa-location-dot text-[#FF2D95]"></i> Vistalegre</span>
+                                  <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded border border-white/15"><i className="fa-solid fa-clock text-[#FF2D95]"></i> 21:00 - 06:00</span>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+
+                  {/* 2. Datos del pedido (Acordeón) */}
+                  <div className="card-dark shadow-sm rounded-xl mb-4 overflow-hidden">
+                      <div className="p-5 flex justify-between items-center cursor-pointer hover:bg-[#27272A]/50 transition-colors" onClick={() => setIsStayOpen(!isStayOpen)}>
+                          <div>
+                              <h2 className="text-[16px] font-bold text-white mb-1">Datos de tu plan</h2>
+                              {!isStayOpen && <p className="text-[13px] text-gray-400">{PRODUCT_DATA.tickets} · {PRODUCT_DATA.shortDesc}</p>}
+                          </div>
+                          <div className="w-8 h-8 rounded-full bg-[#27272A] flex items-center justify-center text-[#FF2D95] shrink-0">
+                              <i className={`fa-solid fa-chevron-down text-[12px] transition-transform duration-300 ${isStayOpen ? 'rotate-180' : ''}`}></i>
+                          </div>
+                      </div>
+
+                      {isStayOpen && (
+                          <div className="p-5 pt-0 border-t border-[#27272A] mt-2 fade-in">
+                              <div className="flex flex-col sm:flex-row justify-between border-b border-[#27272A] py-4 mb-4 gap-4 sm:gap-0">
+                                  <div className="w-full sm:w-1/2 sm:pr-4 sm:border-r border-[#27272A]">
+                                      <p className="text-gray-500 text-[11px] font-bold uppercase tracking-wider mb-1">Fecha y apertura</p>
+                                      <p className="font-bold text-white text-[15px] mb-0.5">15 de junio · 21:00</p>
+                                      <p className="text-gray-400 text-[12px]">Cierre estimado · 06:00</p>
+                                  </div>
+                                  <div className="w-full sm:w-1/2 sm:pl-4">
+                                      <p className="text-gray-500 text-[11px] font-bold uppercase tracking-wider mb-1">Venue</p>
+                                      <p className="font-bold text-white text-[15px] mb-0.5">Movistar Arena Madrid</p>
+                                      <p className="text-gray-400 text-[12px]">C/ del Utebo, 1 · 28025 Madrid</p>
+                                  </div>
+                              </div>
+                              <div className="flex justify-between items-center mb-4">
+                                  <span className="bg-[#27272A] text-gray-300 px-2.5 py-1 rounded-full text-[11px] font-medium border border-[#3F3F46]">Edad mínima · +18 años</span>
+                                  <a href="#" className="booking-link font-medium text-[13px]">Editar</a>
+                              </div>
+                              <div className="border-t border-[#27272A] pt-4">
+                                  <p className="text-gray-500 text-[11px] font-bold uppercase tracking-wider mb-2">Entradas seleccionadas</p>
+                                  <div className="flex justify-between items-center">
+                                      <p className="font-bold text-white text-[14px]">2 × General Admission · Plan en pareja</p>
+                                      <a href="#" className="booking-link font-medium text-[13px]">Editar</a>
+                                  </div>
+                              </div>
+                          </div>
+                      )}
+                  </div>
+
+                  {/* 3. Detalles del evento (Acordeón) */}
+                  <div className="card-dark shadow-sm rounded-xl mb-4 overflow-hidden">
+                      <div className="p-5 flex justify-between items-center cursor-pointer hover:bg-[#27272A]/50 transition-colors" onClick={() => setIsRoomOpen(!isRoomOpen)}>
+                          <div>
+                              <h2 className="text-[16px] font-bold text-white mb-1">Detalles del evento</h2>
+                              {!isRoomOpen && <p className="text-[13px] text-gray-400 truncate max-w-[200px] sm:max-w-none">{PRODUCT_DATA.highlights}</p>}
+                          </div>
+                          <div className="flex items-center gap-4 shrink-0">
+                              <div className="w-8 h-8 rounded-full bg-[#27272A] flex items-center justify-center text-[#FF2D95]">
+                                  <i className={`fa-solid fa-chevron-down text-[12px] transition-transform duration-300 ${isRoomOpen ? 'rotate-180' : ''}`}></i>
+                              </div>
+                          </div>
+                      </div>
+
+                      {isRoomOpen && (
+                          <div className="border-t border-[#27272A] fade-in">
+                              <div className="p-5 pb-0">
+                                  <h3 className="text-[16px] font-bold text-[#FF2D95] mb-4">JUNGLE · 15 jun · Vistalegre</h3>
+
+                                  <div className="mb-6 border border-[#27272A] rounded-xl overflow-hidden bg-[#0E0E10] shadow-sm">
+                                      <div className="relative h-48 sm:h-64 bg-black">
+                                          <img src={PRODUCT_DATA.details.images[currentImageIndex]} alt="Detalle del evento" className="w-full h-full object-cover transition-opacity duration-300" />
+                                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm text-white text-[11px] px-3 py-1.5 rounded-lg flex items-center gap-2 font-medium tracking-wide">
+                                              <i className="fa-solid fa-camera"></i> {currentImageIndex + 1}/{PRODUCT_DATA.details.images.length}
+                                          </div>
+
+                                          <div onClick={handlePrevImage} className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 backdrop-blur-sm text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-black/60 transition-colors">
+                                              <i className="fa-solid fa-chevron-left text-xs"></i>
+                                          </div>
+
+                                          <div onClick={handleNextImage} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 backdrop-blur-sm text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-black/60 transition-colors">
+                                              <i className="fa-solid fa-chevron-right text-xs"></i>
+                                          </div>
+                                      </div>
+
+                                      <div className="p-5 border-t border-[#27272A]">
+                                          <div className="flex flex-wrap gap-2 mb-4">
+                                              <span className="bg-[#27272A] border border-[#3F3F46] text-gray-300 text-[11px] px-2.5 py-1 rounded font-bold">{PRODUCT_DATA.details.date}</span>
+                                              <span className="bg-[#27272A] border border-[#3F3F46] text-gray-300 text-[11px] px-2.5 py-1 rounded font-bold">{PRODUCT_DATA.details.venue}</span>
+                                          </div>
+                                          <h4 className="text-[15px] font-bold text-white mb-2.5 leading-snug">{PRODUCT_DATA.details.headline}</h4>
+                                          <p className="text-[13px] text-gray-400 mb-6 leading-relaxed">{PRODUCT_DATA.details.longDesc}</p>
+
+                                          <h5 className="text-[14px] font-bold text-[#FF2D95] mb-3">Lo que vivirás</h5>
+                                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                              {PRODUCT_DATA.details.amenities.map((am, idx) => (
+                                                  <div key={idx} className="border border-[#27272A] rounded-lg p-4 flex flex-col items-center justify-center text-center gap-2 bg-[#0A0A0C]">
+                                                      <i className={`fa-solid ${am.icon} text-[#FF2D95] text-xl mb-1`}></i>
+                                                      <span className="text-[11px] text-gray-300 font-medium leading-tight">{am.name}</span>
+                                                  </div>
+                                              ))}
+                                          </div>
+                                      </div>
+                                  </div>
+
+                                  <div className="inline-flex items-center gap-1.5 bg-[#FF2D95]/10 border border-[#FF2D95]/40 text-[#FF2D95] px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide mb-5">
+                                      <i className="fa-regular fa-clock"></i> ¡Date prisa! Quedan muy pocas entradas
+                                  </div>
+
+                                  <p className="text-[14px] text-white font-medium mb-1">JUNGLE · Electronic Live Experience</p>
+                                  <p className="text-[13px] text-gray-400 mb-5">Precio Live Addict · Fever</p>
+
+                                  <div className="flex gap-5 text-[13px] font-medium pb-6">
+                                      <a href="#" className="booking-link">Editar</a>
+                                      <a href="#" className="booking-link">Ver condiciones</a>
+                                  </div>
+                              </div>
+
+                              <div className="bg-[#0E0E10] p-5 border-t border-[#27272A]">
+                                  <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-4 flex items-center gap-2"><i className="fa-solid fa-sparkles text-[#FF2D95]"></i> Recomendaciones añadidas al plan</p>
+
+                                  {addedExtras.length === 0 ? (
+                                      <p className="text-[12px] text-gray-500 italic">Aún no has añadido recomendaciones. Habla con Fever Agentforce para personalizar tu noche.</p>
+                                  ) : (
+                                      <ul className="space-y-3">
+                                          {addedExtras.map(extra => (
+                                              <li key={extra.id} className="flex items-start gap-3">
+                                                  <i className="fa-solid fa-circle-check text-[#FF2D95] mt-0.5"></i>
+                                                  <div>
+                                                      <h4 className="text-[13px] font-bold text-white mb-0.5">{extra.name}</h4>
+                                                      <p className="text-[12px] text-gray-400">{extra.shortDesc}</p>
+                                                  </div>
+                                              </li>
+                                          ))}
+                                      </ul>
+                                  )}
+                              </div>
+                          </div>
+                      )}
+                  </div>
+
+                  {/* 4. Resumen del precio (Acordeón) */}
+                  <div className="card-dark shadow-sm rounded-xl mb-4 overflow-hidden">
+                      <div className="p-5 flex justify-between items-center cursor-pointer hover:bg-[#27272A]/50 transition-colors" onClick={() => setIsPriceOpen(!isPriceOpen)}>
+                          <div>
+                              <h2 className="text-[16px] font-bold text-white mb-1">Resumen del precio</h2>
+                              {!isPriceOpen && <p className="text-[13px] text-gray-400 font-medium">{addedExtras.length > 0 ? `Plan + ${addedExtras.length} upgrade${addedExtras.length > 1 ? 's' : ''}` : 'Plan base · 2 entradas'}</p>}
+                          </div>
+                          <div className="flex items-center gap-4 shrink-0">
+                              {!isPriceOpen && <span className="font-bold text-white text-[16px]">{totalPrice.toLocaleString('es-ES', {minimumFractionDigits: 2})}€</span>}
+                              <div className="w-8 h-8 rounded-full bg-[#27272A] flex items-center justify-center text-[#FF2D95]">
+                                  <i className={`fa-solid fa-chevron-down text-[12px] transition-transform duration-300 ${isPriceOpen ? 'rotate-180' : ''}`}></i>
+                              </div>
+                          </div>
+                      </div>
+
+                      {isPriceOpen && (
+                          <div className="p-5 pt-0 border-t border-[#27272A] mt-2 fade-in">
+
+                              <div className="mt-4 mb-5 pb-5 border-b border-[#27272A]">
+                                  <h3 className="text-[14px] font-bold text-white mb-3">{PRODUCT_DATA.event}</h3>
+                                  <div className="flex justify-between items-end mb-3">
+                                      <p className="text-[13px] font-medium text-gray-400">2 × General Admission</p>
+                                      <div className="text-right">
+                                          <span className="text-[15px] font-bold text-white">{PRODUCT_DATA.basePrice.toLocaleString('es-ES', {minimumFractionDigits: 2})}€</span>
+                                      </div>
+                                  </div>
+
+                                  <div className="text-[13px] text-gray-400 mb-3 space-y-1.5 bg-[#0A0A0C] p-3 rounded-lg border border-[#27272A]">
+                                      <div className="flex justify-between"><span>Entrada GA · JUNGLE</span><span>54,00€ × 2</span></div>
+                                      <div className="flex justify-between"><span>Cargos por servicio</span><span className="text-[#22C55E] font-semibold">Incluidos</span></div>
+                                      <div className="flex justify-between text-[#FF2D95]"><span>Acceso anticipado · Live Addict</span><span>Aplicado</span></div>
+                                  </div>
+                              </div>
+
+                              <div className="mb-6 pb-5 border-b border-[#27272A]">
+                                  <h3 className="text-[14px] font-bold text-white mb-4 flex items-center gap-2"><i className="fa-solid fa-sparkles text-[#FF2D95]"></i> Upgrades añadidos</h3>
+                                  {addedExtras.length === 0 ? (
+                                      <p className="text-[12px] text-gray-500 italic">Aún no se han añadido upgrades.</p>
+                                  ) : (
+                                      <div className="space-y-4">
+                                          {addedExtras.map(extra => (
+                                              <div key={extra.id} className="flex justify-between items-start text-[13px] fade-in">
+                                                  <div>
+                                                      <p className="font-bold text-white mb-0.5">{extra.name}</p>
+                                                      <p className="text-[11px] text-gray-500">2 personas · cancelación flexible</p>
+                                                  </div>
+                                                  <span className="font-bold text-white">{extra.price === 0 ? 'Incluido' : `${extra.price.toLocaleString('es-ES', {minimumFractionDigits: 2})}€`}</span>
+                                              </div>
+                                          ))}
+                                      </div>
+                                  )}
+                              </div>
+
+                              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-4">Tus beneficios</p>
+
+                              <div className="space-y-3 text-[13px] text-gray-300 mb-5 font-medium">
+                                  <div className="flex justify-between items-center">
+                                      <span>Tier Live Addict · Fever</span>
+                                      <span className="text-[#86EFAC] flex items-center gap-1.5">Activo <i className="fa-solid fa-circle-check"></i></span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                      <span>Acceso anticipado a JUNGLE</span>
+                                      <span className="text-[#86EFAC] flex items-center gap-1.5">Aplicado <i className="fa-solid fa-circle-check"></i></span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                      <span>Cancelación flexible 48h</span>
+                                      <span className="text-[#86EFAC] flex items-center gap-1.5">Aplicado <i className="fa-solid fa-circle-check"></i></span>
+                                  </div>
+                              </div>
+
+                              <div className="bg-gradient-to-br from-[#22c55e]/10 to-[#16a34a]/5 border border-[#22c55e]/30 text-[#86EFAC] p-4 rounded-lg text-[13px] font-medium mb-6 leading-relaxed">
+                                  ¡Tu plan está prácticamente listo! Personalízalo con un upgrade VIP o el after-party oficial para una noche completa.
+                              </div>
+
+                              <div className="bg-[#0A0A0C] p-5 rounded-xl border border-[#27272A]">
+                                  <div className="mb-4 pb-4 border-b border-[#27272A]">
+                                      <p className="text-[13px] text-white font-bold mb-1.5">Subtotal entradas</p>
+                                      <div className="flex justify-between text-[12px] text-gray-400">
+                                          <span>Tasa fan club incluida</span>
+                                          <span>{PRODUCT_DATA.basePrice.toLocaleString('es-ES', {minimumFractionDigits: 2})}€</span>
+                                      </div>
+                                  </div>
+
+                                  <div className="mb-4 pb-4 border-b border-[#27272A]">
+                                      <p className="text-[13px] text-white font-bold mb-1.5">Subtotal upgrades</p>
+                                      <div className="flex justify-between text-[12px] text-gray-400">
+                                          <span>Aplicados al plan</span>
+                                          <span>{totalExtrasPrice.toLocaleString('es-ES', {minimumFractionDigits: 2})}€</span>
+                                      </div>
+                                  </div>
+
+                                  <div className="flex justify-between items-end mb-1">
+                                      <span className="text-[16px] font-bold text-white">Total</span>
+                                      <span className="text-[20px] font-extrabold fever-gradient-text">{totalPrice.toLocaleString('es-ES', {minimumFractionDigits: 2})}€</span>
+                                  </div>
+                                  <p className="text-[11px] text-gray-500 text-right">Impuestos y cargos por servicio incluidos</p>
+                              </div>
+
+                              <div className="bg-[#0A0A0C] p-5 rounded-xl border border-[#27272A] mt-4 space-y-3 text-[14px]">
+                                  <div className="flex justify-between font-bold text-white">
+                                      <span>Método de pago previsto</span>
+                                      <span>Apple Pay · ····8421</span>
+                                  </div>
+                                  <div className="flex justify-between text-gray-300 font-medium border-t border-[#27272A] pt-3">
+                                      <span>Pago disponible al finalizar</span>
+                                      <span className="text-[#FF2D95] font-bold">En la app</span>
+                                  </div>
+                              </div>
+                          </div>
+                      )}
+                  </div>
+
+                  <button className={`w-full mt-2 ${budgetStatus === 'saved' ? 'fever-gradient' : 'fever-gradient'} text-white font-bold py-4 rounded-xl uppercase text-sm tracking-wider shadow-lg shadow-[#E9007F]/30 hover:opacity-90 transition flex items-center justify-center gap-3`}>
+                      {budgetStatus === 'saved' ? (
+                          <><i className="fa-solid fa-bookmark"></i> Carrito {PRODUCT_DATA.orderRef} guardado · Continuar más tarde</>
+                      ) : (
+                          <><i className="fa-solid fa-ticket"></i> Continuar al checkout</>
+                      )}
+                  </button>
+
+                </div>
+
+                {/* --- AGENTFORCE CHAT (PANEL DERECHO) --- */}
+                {isChatOpen && (
+                  <div className={`w-full flex flex-col bg-[#18181B] rounded-xl shadow-lg border border-[#27272A] overflow-hidden relative transition-all duration-700 ease-in-out h-[600px] lg:h-[calc(100vh-120px)] lg:w-[25%] min-w-[320px] lg:sticky lg:top-24 lg:self-start`}>
+                    <div className="px-5 py-4 border-b border-[#27272A] flex items-center justify-between fever-gradient text-white shrink-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0 backdrop-blur"><i className="fa-solid fa-bolt text-white text-[12px]"></i></div>
+                        <div><h2 className="font-bold text-[14px]">Fever Agentforce</h2><p className="text-[10px] text-pink-100 flex items-center gap-1 opacity-90"><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> Activo · Contexto desde email</p></div>
+                      </div>
+                      <button onClick={() => setIsChatOpen(false)} className="text-pink-100 hover:text-white transition"><i className="fa-solid fa-xmark text-lg"></i></button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-[#0E0E10]">
+                      <div className="text-center text-[10px] text-gray-500 font-bold mb-2 uppercase tracking-widest opacity-80">Sesión continua · Golden Profile</div>
+                      {messages.map((msg, index) => (
+                        <div
+                          key={index}
+                          ref={index === messages.length - 1 ? lastMessageRef : null}
+                          className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} fade-in`}>
+                          {msg.role === 'agent' && <div className="w-6 h-6 rounded-full fever-gradient flex items-center justify-center shrink-0 mr-2 mt-1 shadow-sm"><i className="fa-solid fa-bolt text-white text-[10px]"></i></div>}
+                          <div className={`max-w-[85%] flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                            <div className={`px-3.5 py-2.5 text-[13px] leading-relaxed shadow-sm ${msg.role === 'user' ? 'bg-[#27272A] border border-[#3F3F46] text-white rounded-2xl rounded-tr-sm' : 'bg-[#18181B] border border-[#E9007F]/40 text-gray-100 rounded-2xl rounded-tl-sm'}`}>
+                                <span dangerouslySetInnerHTML={{ __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>').replace(/_(.*?)_/g, '<em>$1</em>') }} />
+                            </div>
+                          </div>
+                          {msg.role === 'user' && <div className="w-6 h-6 rounded-full fever-logo-circle text-white flex items-center justify-center shrink-0 ml-2 mt-1 font-bold text-[10px] shadow-sm">E</div>}
+                        </div>
+                      ))}
+                      {isTyping && (
+                        <div className="flex justify-start fade-in">
+                          <div className="w-6 h-6 rounded-full fever-gradient flex items-center justify-center shrink-0 mr-2 shadow-sm"><i className="fa-solid fa-bolt text-white text-[10px]"></i></div>
+                          <div className="bg-[#18181B] border border-[#E9007F]/40 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                          </div>
+                        </div>
+                      )}
+                      <div ref={chatEndRef} />
+                    </div>
+
+                    <div className="p-3 bg-[#18181B] border-t border-[#27272A] shrink-0">
+                      <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="relative flex flex-col">
+                        <div className="relative flex items-end gap-2">
+                            <textarea ref={textareaRef} value={inputText} onChange={(e) => setInputText(e.target.value)} rows="1" placeholder="Escribe tu mensaje..." className="chat-textarea w-full bg-[#0E0E10] border border-[#27272A] rounded-2xl py-2.5 pl-4 pr-12 text-[13px] text-white outline-none focus:border-[#E9007F] focus:ring-2 focus:ring-[#E9007F]/30 transition-all overflow-hidden placeholder-gray-600" readOnly={isSimulatingInput} />
+                            <button type="submit" disabled={!inputText.trim() || isSimulatingInput} className="absolute right-1.5 bottom-1.5 p-2 fever-gradient text-white rounded-full hover:opacity-90 disabled:opacity-40 transition shadow-sm">
+                                <i className="fa-solid fa-paper-plane text-[11px] ml-[-1px]"></i>
+                            </button>
+                        </div>
+                      </form>
+                      <div className="flex items-center justify-center gap-1 mt-2 text-[10px] text-gray-500 font-medium text-center"><i className="fa-solid fa-sparkles text-[#FF2D95]"></i> Agentforce actualiza la web en tiempo real</div>
+                    </div>
+                  </div>
+                )}
+              </main>
+
+              {!isChatOpen && (
+                <button onClick={() => setIsChatOpen(true)} className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 fever-gradient text-white p-4 rounded-full shadow-2xl shadow-[#E9007F]/40 hover:scale-105 transition-all duration-300 flex items-center gap-3 z-50 group fade-in">
+                  <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0 backdrop-blur"><i className="fa-solid fa-bolt text-white"></i></div>
+                  <span className="font-bold hidden sm:block max-w-0 overflow-hidden group-hover:max-w-[220px] transition-all duration-500 whitespace-nowrap text-white uppercase tracking-wider text-[12px]">Hablar con Fever Agentforce</span>
+                  <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-[#00D4FF] border-2 border-[#0A0A0C] rounded-full pulse-dot"></span>
+                </button>
+              )}
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

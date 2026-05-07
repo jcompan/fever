@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>App Fever · Checkout FEV-49281</title>
+    <link rel="icon" href="https://feverup.com/logo/fever-logo-black.svg" type="image/svg+xml">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #d1d7db;
+            margin: 0;
+        }
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+        .font-numbers { font-family: 'Inter', sans-serif; font-feature-settings: 'tnum'; }
+
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-down {
+            animation: slideDown 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse-ring {
+            animation: pulseRing 1.6s ease-out infinite;
+        }
+        @keyframes pulseRing {
+            0% { box-shadow: 0 0 0 0 rgba(233, 0, 127, 0.5); }
+            70% { box-shadow: 0 0 0 18px rgba(233, 0, 127, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(233, 0, 127, 0); }
+        }
+
+        .spin { animation: spin 0.9s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .fever-gradient { background: linear-gradient(135deg, #E9007F 0%, #C026D3 100%); }
+        .fever-gradient-text {
+            background: linear-gradient(135deg, #FF2D95 0%, #C026D3 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .fever-logo-circle {
+            background: linear-gradient(135deg, #E9007F 0%, #C026D3 100%);
+            color: white;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const PRODUCT_IMG = "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=800&q=80";
+        const VIP_IMG = "https://images.unsplash.com/photo-1574391884720-bbc049ec09ad?auto=format&fit=crop&w=400&q=80";
+        const FEVER_LOGO = "https://feverup.com/logo/fever-logo-black.svg";
+
+        // Logo Fever oficial (SVG). invert=true para fondos oscuros.
+        const FeverLogo = ({ className = "h-5", invert = false }) => (
+            <img
+                src={FEVER_LOGO}
+                alt="Fever"
+                className={`${className} object-contain`}
+                style={invert ? { filter: 'brightness(0) invert(1)' } : {}}
+            />
+        );
+
+        // Icono dentro de círculo (notificación push, tarjetas)
+        const FeverIcon = () => (
+            <div className="w-full h-full bg-black rounded-full flex items-center justify-center">
+                <FeverLogo className="w-3/5 h-auto" invert />
+            </div>
+        );
+
+        const ORDER_DATA = {
+            ref: "FEV-49281",
+            event: "Aurora Nights",
+            artist: "Electronic Live Experience",
+            shortDesc: "15 jun · Madrid · Palacio de Vistalegre",
+            tickets: "2 entradas General Admission",
+            basePrice: 108.00,
+            ticketBreakdown: [
+                { label: "GA · Aurora Nights × 2", amount: 108.00 }
+            ],
+            includedServices: [
+                { icon: "fa-mobile-screen", label: "Tickets digitales en la app" },
+                { icon: "fa-rotate-left", label: "Cancelación flexible 48h" },
+                { icon: "fa-bolt", label: "Acceso anticipado · Live Addict" }
+            ],
+            recommendation: {
+                id: "vip_experience",
+                title: "VIP Experience",
+                productLine: "Upgrade premium · 2 personas",
+                price: 70.00,
+                priceLabel: "70,00 €",
+                shortDesc: "Acceso prioritario · Zona reservada · Copa de bienvenida"
+            },
+            event_meta: {
+                date: "15 de junio",
+                doors: "Apertura 21:00",
+                venue: "Palacio de Vistalegre"
+            },
+            paymentMethod: "Apple Pay · ····8421"
+        };
+
+        function AppFever() {
+            const [paymentStatus, setPaymentStatus] = useState("pending");
+            const [showNotification, setShowNotification] = useState(false);
+
+            const stepRef = useRef("pending");
+            useEffect(() => { stepRef.current = paymentStatus; }, [paymentStatus]);
+
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (e.key === "Alt" || e.key === "Control" || e.key === "Shift" || e.key === "Meta") return;
+
+                    if (stepRef.current === "pending") {
+                        e.preventDefault();
+                        handlePay();
+                    } else if (stepRef.current === "confirmed" && !showNotification) {
+                        e.preventDefault();
+                        setShowNotification(true);
+                    }
+                };
+                window.addEventListener("keydown", handleKeyDown);
+                return () => window.removeEventListener("keydown", handleKeyDown);
+            }, [showNotification]);
+
+            const handlePay = () => {
+                if (stepRef.current !== "pending") return;
+                setPaymentStatus("processing");
+                setTimeout(() => {
+                    setPaymentStatus("confirmed");
+                    setTimeout(() => setShowNotification(true), 900);
+                }, 1600);
+            };
+
+            const getCurrentTime = () => {
+                const now = new Date();
+                return now.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+            };
+
+            const totalPrice = ORDER_DATA.basePrice + ORDER_DATA.recommendation.price;
+
+            // ---------- VISTA: CARRITO RECUPERADO ----------
+            const CartView = () => (
+                <div className="flex-1 flex flex-col bg-[#0A0A0C] h-full relative">
+                    {/* Cabecera Fever */}
+                    <div className="bg-[#050505] text-white px-4 pt-3 pb-3 sm:pt-2 shrink-0 z-10 flex items-center justify-center fade-in border-b border-[#27272A]">
+                        <FeverLogo className="h-5" invert />
+                    </div>
+
+                    {/* Header del pedido */}
+                    <div className="bg-[#0A0A0C] py-3 px-4 text-center border-b border-[#27272A] z-10 shrink-0">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Tu plan personalizado</p>
+                        <h1 className="text-[16px] font-bold text-white font-numbers">Carrito {ORDER_DATA.ref}</h1>
+                    </div>
+
+                    {/* Contenido scrolleable */}
+                    <div className="flex-1 overflow-y-auto pb-36">
+
+                        {/* Evento principal */}
+                        <div className="bg-[#18181B] p-4 mb-2 border-b border-[#27272A]">
+                            <div className="flex gap-4">
+                                <div className="w-24 shrink-0">
+                                    <img src={PRODUCT_IMG} alt="Aurora Nights" className="w-full h-24 object-cover rounded" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-[10px] text-[#FF2D95] font-bold uppercase tracking-widest mb-0.5">Electronic Live Experience</p>
+                                    <h2 className="text-[15px] text-white leading-snug font-bold mb-1">
+                                        {ORDER_DATA.event}
+                                    </h2>
+                                    <p className="text-[11px] text-gray-400 mb-2">{ORDER_DATA.shortDesc}</p>
+                                    <p className="text-[11px] text-gray-300 mb-2">{ORDER_DATA.tickets}</p>
+                                    <div className="flex items-center gap-2 font-numbers">
+                                        <span className="text-white font-bold text-[16px]">{ORDER_DATA.basePrice.toLocaleString("es-ES", { minimumFractionDigits: 2 })}€</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Detalles evento */}
+                        <div className="bg-[#18181B] p-4 mb-2 border-b border-[#27272A]">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">Detalles del evento</p>
+                            <div className="space-y-2.5 text-[13px]">
+                                <div className="flex items-center gap-3">
+                                    <i className="fa-regular fa-calendar text-[#FF2D95] w-4 text-center"></i>
+                                    <span className="text-gray-200">{ORDER_DATA.event_meta.date} · {ORDER_DATA.event_meta.doors}</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <i className="fa-solid fa-location-dot text-[#FF2D95] w-4 text-center"></i>
+                                    <span className="text-gray-200">{ORDER_DATA.event_meta.venue}</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <i className="fa-solid fa-people-group text-[#FF2D95] w-4 text-center"></i>
+                                    <span className="text-gray-200">Plan en pareja · 2 personas</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Servicios incluidos */}
+                        <div className="bg-[#18181B] p-4 mb-2 border-b border-[#27272A]">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">Incluido en tu plan</p>
+                            <div className="space-y-3">
+                                {ORDER_DATA.includedServices.map((s, i) => (
+                                    <div key={i} className="flex items-center gap-3 text-[13px]">
+                                        <div className="w-7 h-7 rounded-full bg-[#27272A] flex items-center justify-center text-[#FF2D95] shrink-0">
+                                            <i className={`fa-solid ${s.icon} text-[12px]`}></i>
+                                        </div>
+                                        <span className="text-gray-200 flex-1">{s.label}</span>
+                                        <i className="fa-solid fa-check text-[#22C55E] text-[11px]"></i>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Upgrade VIP añadido */}
+                        <div className="bg-[#18181B] p-4 mb-2 border-l-4 border-[#E9007F] border-b border-r border-t border-[#27272A]">
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-[10px] uppercase tracking-widest text-[#FF2D95] font-bold">Upgrade añadido por Agentforce</p>
+                                <span className="text-[9px] uppercase tracking-wider fever-gradient text-white font-bold px-2 py-0.5 rounded-full">Ancillary</span>
+                            </div>
+                            <div className="flex gap-3 items-start">
+                                <img src={VIP_IMG} alt="VIP Experience" className="w-16 h-16 object-cover rounded shrink-0" />
+                                <div className="flex-1">
+                                    <h3 className="text-[14px] font-bold text-white leading-snug">{ORDER_DATA.recommendation.title}</h3>
+                                    <p className="text-[11px] text-gray-400 mb-1">{ORDER_DATA.recommendation.productLine}</p>
+                                    <p className="text-[11px] text-gray-300 leading-snug">{ORDER_DATA.recommendation.shortDesc}</p>
+                                </div>
+                                <span className="text-[#FF2D95] font-bold text-[13px] font-numbers shrink-0">{ORDER_DATA.recommendation.priceLabel}</span>
+                            </div>
+                        </div>
+
+                        {/* Fever Insider activo */}
+                        <div className="bg-gradient-to-br from-[#00D4FF]/10 to-[#7D27FF]/5 p-4 mb-2 border-b border-[#27272A] flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-[#00D4FF]/20 flex items-center justify-center text-[#00D4FF] shrink-0 border border-[#00D4FF]/30">
+                                <i className="fa-solid fa-bolt"></i>
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-[10px] uppercase tracking-widest text-[#00D4FF] font-bold">Fever Insider · Activo</p>
+                                <p className="text-[12px] text-gray-200 font-semibold">Esta compra suma progreso hacia tu siguiente tier</p>
+                            </div>
+                        </div>
+
+                        {/* Método de pago */}
+                        <div className="bg-[#18181B] p-4 mb-2 flex items-center gap-3 border-b border-[#27272A]">
+                            <div className="w-9 h-9 rounded-full bg-[#27272A] flex items-center justify-center text-[#FF2D95] shrink-0">
+                                <i className="fa-brands fa-apple-pay text-[18px]"></i>
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Método de pago</p>
+                                <p className="text-[14px] text-white font-semibold">{ORDER_DATA.paymentMethod}</p>
+                            </div>
+                            <i className="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
+                        </div>
+
+                        {/* Total */}
+                        <div className="bg-[#0E0E10] p-4 mb-2 border border-[#27272A] mx-2 rounded-xl mt-3">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-[13px] text-gray-300">2 × GA · Aurora Nights</span>
+                                <span className="text-[13px] text-white font-numbers">{ORDER_DATA.basePrice.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span>
+                            </div>
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-[13px] text-gray-300">VIP Experience (2 personas)</span>
+                                <span className="text-[13px] text-white font-numbers">{ORDER_DATA.recommendation.price.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span>
+                            </div>
+                            <div className="flex justify-between items-center mb-3">
+                                <span className="text-[13px] text-gray-300">Cargos por servicio</span>
+                                <span className="text-[13px] text-[#22C55E] font-semibold">Incluidos</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-3 border-t border-[#27272A]">
+                                <span className="text-[15px] font-bold text-white">Total</span>
+                                <span className="text-[18px] font-extrabold fever-gradient-text font-numbers">{totalPrice.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span>
+                            </div>
+                        </div>
+
+                        <p className="px-4 py-3 text-[11px] text-gray-500 text-center leading-snug">
+                            Pago seguro · Tickets digitales con QR.<br />
+                            Recibirás la confirmación en la app al instante.
+                        </p>
+                    </div>
+
+                    {/* Bottom Floating Bar (Pago) */}
+                    <div className="absolute bottom-0 w-full bg-[#0A0A0C] border-t border-[#27272A] z-20">
+                        <div className="px-4 py-2.5 flex justify-between items-center">
+                            <div>
+                                <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Total</p>
+                                <p className="font-bold text-[17px] font-numbers text-white">{totalPrice.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</p>
+                            </div>
+                            <span className="text-[10px] text-gray-500">Imp. incluidos · Sin cargos extra</span>
+                        </div>
+                        <div className="px-4 pb-4">
+                            <button
+                                onClick={handlePay}
+                                disabled={paymentStatus !== "pending"}
+                                className={`w-full font-bold py-3.5 rounded-xl text-[14px] tracking-wider uppercase flex items-center justify-center gap-2 transition-colors ${paymentStatus === "pending" ? "fever-gradient text-white pulse-ring shadow-lg shadow-[#E9007F]/30" : "bg-[#27272A] text-gray-500 cursor-not-allowed"}`}
+                            >
+                                {paymentStatus === "pending" && (<><i className="fa-solid fa-lock"></i> Pagar ahora</>)}
+                                {paymentStatus === "processing" && (<><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full spin"></span> Procesando pago...</>)}
+                                {paymentStatus === "confirmed" && (<><i className="fa-solid fa-check"></i> Pago completado</>)}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            // ---------- VISTA: CONFIRMACIÓN ----------
+            const ConfirmationView = () => (
+                <div className="flex-1 flex flex-col bg-[#0A0A0C] h-full relative">
+                    {/* Hero gradient */}
+                    <div className="fever-gradient text-white pt-8 pb-8 px-6 text-center shrink-0 relative overflow-hidden">
+                        <div className="absolute -top-12 -right-12 w-48 h-48 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div className="absolute -bottom-16 -left-12 w-48 h-48 bg-[#00D4FF] opacity-15 rounded-full blur-3xl pointer-events-none"></div>
+
+                        <div className="relative">
+                            <div className="w-20 h-20 mx-auto rounded-full bg-white/20 flex items-center justify-center mb-5 backdrop-blur-sm fade-in border border-white/30">
+                                <i className="fa-solid fa-check text-4xl"></i>
+                            </div>
+                            <h1 className="text-[24px] font-extrabold mb-1.5 fade-in tracking-tight">Compra confirmada</h1>
+                            <p className="text-[13px] opacity-95 leading-snug max-w-[300px] mx-auto fade-in">
+                                Gracias, Elena. Tu compra para <strong>Aurora Nights</strong> ha sido confirmada.
+                            </p>
+                            <div className="mt-5 inline-block bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-[11px] font-bold tracking-widest fade-in border border-white/20">
+                                <i className="fa-solid fa-circle-check mr-1.5"></i> ESTADO: CONFIRMADO
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Detalle */}
+                    <div className="flex-1 overflow-y-auto px-4 pt-5 pb-28">
+                        <div className="bg-[#18181B] border border-[#27272A] rounded-xl p-4 mb-4 fade-in">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Tu plan</p>
+                            <div className="flex gap-3 items-start">
+                                <img src={PRODUCT_IMG} alt="Aurora Nights" className="w-16 h-16 object-cover rounded shrink-0" />
+                                <div className="flex-1">
+                                    <p className="text-[10px] text-[#FF2D95] font-bold uppercase tracking-widest">Electronic Live Experience</p>
+                                    <p className="text-[14px] font-bold text-white leading-snug">{ORDER_DATA.event}</p>
+                                    <p className="text-[11px] text-gray-400 mt-0.5">{ORDER_DATA.shortDesc}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-[#E9007F]/15 to-[#C026D3]/8 border border-[#E9007F]/40 rounded-xl p-4 mb-4 fade-in">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-9 h-9 rounded-full fever-gradient text-white flex items-center justify-center shrink-0 shadow-lg shadow-[#E9007F]/30">
+                                    <i className="fa-solid fa-ticket"></i>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] uppercase tracking-widest text-[#FF2D95] font-bold">Tus entradas</p>
+                                    <p className="text-[15px] text-white font-bold">2 × GA + VIP Experience</p>
+                                </div>
+                            </div>
+                            <p className="text-[12px] text-gray-300 leading-snug pl-12">
+                                Tienes <strong className="text-white">2 entradas</strong> con <strong className="text-white">VIP Experience</strong> para el <strong className="text-white">15 de junio</strong> en Madrid. También hemos activado tu progreso <strong className="text-[#00D4FF]">Fever Insider</strong> para que esta experiencia cuente en tus próximos beneficios.
+                            </p>
+                        </div>
+
+                        <div className="bg-[#18181B] border border-[#27272A] rounded-xl p-4 mb-4 fade-in">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">Resumen del pago</p>
+                            <div className="flex justify-between items-center mb-2 text-[13px]">
+                                <span className="text-gray-300">2 × GA Aurora Nights</span>
+                                <span className="font-numbers font-semibold text-white">{ORDER_DATA.basePrice.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span>
+                            </div>
+                            <div className="flex justify-between items-center mb-2 text-[13px]">
+                                <span className="text-gray-300">VIP Experience</span>
+                                <span className="font-numbers font-semibold text-white">{ORDER_DATA.recommendation.price.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span>
+                            </div>
+                            <div className="flex justify-between items-center mb-3 text-[13px]">
+                                <span className="text-gray-300">Cargos por servicio</span>
+                                <span className="text-[#22C55E] font-semibold">Incluidos</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-3 border-t border-[#27272A]">
+                                <span className="text-[14px] font-bold text-white">Total cargado</span>
+                                <span className="text-[18px] font-extrabold fever-gradient-text font-numbers">{totalPrice.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span>
+                            </div>
+                            <p className="text-[11px] text-gray-500 mt-2">Cargo a {ORDER_DATA.paymentMethod}</p>
+                        </div>
+
+                        {/* Mensaje de continuidad Golden Profile */}
+                        <div className="bg-gradient-to-br from-[#00D4FF]/10 to-[#7D27FF]/5 border border-[#00D4FF]/30 rounded-xl p-4 mb-4 fade-in">
+                            <div className="flex items-start gap-3">
+                                <div className="w-9 h-9 rounded-full bg-[#00D4FF]/20 flex items-center justify-center text-[#00D4FF] shrink-0 border border-[#00D4FF]/40">
+                                    <i className="fa-solid fa-sparkles"></i>
+                                </div>
+                                <div>
+                                    <p className="text-[11px] uppercase tracking-widest text-[#00D4FF] font-bold">Golden Profile actualizado</p>
+                                    <p className="text-[12px] text-gray-200 leading-snug mt-1">Tu Golden Profile se ha actualizado con esta compra, el upgrade VIP y tu nueva afinidad por experiencias nocturnas premium.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button className="w-full fever-gradient text-white font-bold py-3 rounded-xl text-[13px] tracking-wider uppercase mb-3 fade-in shadow-lg shadow-[#E9007F]/30">
+                            Ver mis tickets
+                        </button>
+                        <button className="w-full border border-[#27272A] text-gray-300 font-medium py-3 rounded-xl text-[13px] fade-in bg-[#18181B]">
+                            Seguir explorando planes
+                        </button>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="h-screen w-full flex items-center justify-center bg-[#d1d7db] sm:py-6">
+                    {/* iPhone Container */}
+                    <div className="w-full h-full sm:h-[90vh] sm:max-h-[932px] sm:w-[430px] bg-[#0A0A0C] sm:rounded-[55px] sm:border-[16px] sm:border-black shadow-2xl flex flex-col overflow-hidden relative ring-1 ring-gray-900/10">
+
+                        {/* Dynamic Island */}
+                        <div className="hidden sm:block absolute top-3 left-1/2 -translate-x-1/2 w-[126px] h-[37px] bg-black rounded-full z-50"></div>
+
+                        {/* iOS Status Bar */}
+                        <div className="hidden sm:flex h-[54px] bg-[#050505] w-full items-center justify-between px-8 text-white font-semibold text-[14px] shrink-0 pt-3 z-40 relative">
+                            <span className="w-16 text-center ml-1">{getCurrentTime()}</span>
+                            <div className="flex gap-2 items-center text-[14px] mr-1">
+                                <i className="fa-solid fa-signal"></i>
+                                <i className="fa-solid fa-wifi"></i>
+                                <i className="fa-solid fa-battery-full text-[17px]"></i>
+                            </div>
+                        </div>
+
+                        {/* Notificación push in-app (overlay) */}
+                        {showNotification && (
+                            <div className="absolute top-6 sm:top-[64px] left-3 right-3 z-50 slide-down">
+                                <div className="bg-[#18181B]/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#27272A] px-3 py-3 flex items-start gap-3">
+                                    <div className="w-10 h-10 rounded-lg fever-gradient flex items-center justify-center shrink-0 shadow-lg shadow-[#E9007F]/30">
+                                        <i className="fa-solid fa-ticket text-white text-[14px]"></i>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                                            <p className="text-[12px] font-bold text-white truncate">Entradas confirmadas · Fever</p>
+                                            <span className="text-[10px] text-gray-400 shrink-0">ahora</span>
+                                        </div>
+                                        <p className="text-[12px] text-gray-200 leading-snug">Aurora Nights · 15 de junio · Madrid</p>
+                                        <p className="text-[11px] text-[#FF2D95] font-semibold mt-1">Tus entradas y VIP Experience ya están disponibles en la app.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Contenido dinámico */}
+                        <div className="flex-1 w-full overflow-hidden">
+                            {paymentStatus !== "confirmed" ? <CartView /> : <ConfirmationView />}
+                        </div>
+
+                        {/* TabBar inferior */}
+                        <div className="h-[60px] w-full bg-[#050505] border-t border-[#27272A] flex justify-between items-center px-4 shrink-0 z-30">
+                            <div className="flex flex-col items-center justify-center w-16 cursor-pointer text-gray-500">
+                                <i className="fa-solid fa-house text-gray-300 text-[18px]"></i>
+                                <span className="text-[10px] mt-1 text-gray-400">Inicio</span>
+                            </div>
+                            <div className="flex flex-col items-center justify-center w-16 cursor-pointer text-gray-500">
+                                <i className="fa-solid fa-magnifying-glass text-gray-300 text-[18px]"></i>
+                                <span className="text-[10px] mt-1 text-gray-400">Explorar</span>
+                            </div>
+                            <div className="flex flex-col items-center justify-center w-16 cursor-pointer text-gray-500">
+                                <i className="fa-solid fa-heart text-gray-300 text-[18px]"></i>
+                                <span className="text-[10px] mt-1 text-gray-400">Favoritos</span>
+                            </div>
+                            <div className={`flex flex-col items-center justify-center w-16 cursor-pointer relative ${paymentStatus !== "confirmed" ? "" : "text-gray-500"}`}>
+                                <div className={`relative ${paymentStatus !== "confirmed" ? "text-[#FF2D95]" : "text-gray-300"}`}>
+                                    <i className="fa-solid fa-bag-shopping text-[18px]"></i>
+                                    {paymentStatus !== "confirmed" && (
+                                        <span className="absolute -top-1.5 -right-2 fever-gradient text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-[#050505] font-numbers">1</span>
+                                    )}
+                                </div>
+                                <span className={`text-[10px] mt-1 ${paymentStatus !== "confirmed" ? "font-semibold text-white" : "text-gray-400"}`}>Cesta</span>
+                            </div>
+                            <div className="flex flex-col items-center justify-center w-16 cursor-pointer text-gray-500 relative">
+                                <div className="relative text-gray-300">
+                                    <i className="fa-solid fa-ticket text-[18px]"></i>
+                                    {paymentStatus === "confirmed" && (
+                                        <span className="absolute -top-1.5 -right-2 fever-gradient text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-[#050505] font-numbers">1</span>
+                                    )}
+                                </div>
+                                <span className="text-[10px] mt-1 text-gray-400">Tickets</span>
+                            </div>
+                        </div>
+
+                        {/* iOS Home Indicator */}
+                        <div className="hidden sm:flex w-full h-[34px] bg-[#050505] items-end justify-center pb-2 shrink-0">
+                            <div className="w-[134px] h-[5px] bg-gray-600 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(<AppFever />);
+    </script>
+</body>
+</html>

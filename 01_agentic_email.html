@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail · JUNGLE y Tame Impala · Fever Experiences</title>
+    <!-- Favicon -->
+    <link rel="icon" href="https://feverup.com/logo/fever-logo-black.svg" type="image/svg+xml">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Tipografía UI de Gmail y cuerpo */
+        body { font-family: 'Google Sans', 'Inter', sans-serif; background-color: #f6f8fc; }
+
+        /* Contenedor principal para no hacer scroll en la ventana, solo en el contenido */
+        .app-wrapper { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Animación de entrada */
+        .email-item { opacity: 0; transform: translateY(20px); transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); display: none; }
+        .email-item.active { display: block; }
+        .email-item.visible { opacity: 1; transform: translateY(0); }
+
+        /* ESTILOS ESPECÍFICOS DEL EMAIL FEVER */
+        .clean-email { font-family: 'Inter', sans-serif; color: #18181B; }
+        .fever-magenta { color: #E9007F; }
+        .fever-bg-magenta { background-color: #E9007F; }
+        .fever-purple { color: #C026D3; }
+        .fever-bg-dark { background-color: #050505; }
+        .fever-gradient { background: linear-gradient(135deg, #E9007F 0%, #C026D3 50%, #00D4FF 100%); }
+        .fever-gradient-text {
+            background: linear-gradient(135deg, #FF2D95 0%, #C026D3 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-primary {
+            background-color: #E9007F;
+            color: white;
+            width: 100%;
+            padding: 14px;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 8px;
+            display: block;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .btn-primary:hover { background-color: #FF2D95; }
+
+        /* Estilos del sidebar clonado de Gmail */
+        .nav-item { display: flex; align-items: center; padding: 0 12px 0 26px; height: 32px; font-size: 14px; color: #202124; border-radius: 0 16px 16px 0; margin-right: 16px; cursor: pointer; }
+        .nav-item:hover { background-color: #f1f3f4; }
+        .nav-item.active { background-color: #fce7f3; color: #831843; font-weight: 600; }
+        .nav-item i { width: 24px; font-size: 16px; margin-right: 18px; color: #444746; }
+        .nav-item.active i { color: #831843; }
+
+        /* Scrollbar personalizado */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #bdc1c6; }
+
+        /* Animación cursor de escritura */
+        .typing-cursor { animation: blink 1s step-end infinite; font-weight: normal; color: #E9007F; margin-left: 2px; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Estilos del Banner de Nuevo Mensaje (Estilo Gmail) */
+        .message-banner {
+            display: none;
+            background-color: #fce7f3;
+            border: 1px solid #f9a8d4;
+            padding: 6px 12px;
+            font-size: 13px;
+            color: #000;
+            border-radius: 2px;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            opacity: 0;
+            transform: translateY(5px);
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            width: max-content;
+            margin-left: auto;
+            margin-right: 8px;
+            margin-bottom: 20px;
+            margin-top: -12px;
+            position: relative;
+            z-index: 10;
+        }
+        .message-banner.visible-banner {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @media (max-width: 768px) {
+            .message-banner { margin-right: 0; margin-left: auto; }
+        }
+        .banner-link {
+            color: #000;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-left: 2px;
+        }
+        .banner-link:hover { opacity: 0.7; }
+
+        /* Avatar Fever */
+        .fever-logo-circle {
+            background: linear-gradient(135deg, #E9007F 0%, #C026D3 100%);
+            color: white;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- GMAIL HEADER CLONADO -->
+        <header class="flex items-center justify-between px-4 py-2 bg-[#f6f8fc] shrink-0">
+            <div class="flex items-center gap-4 w-[238px] shrink-0">
+                <div class="p-3 rounded-full hover:bg-gray-200 cursor-pointer transition">
+                    <i class="fa-solid fa-bars text-gray-600 text-[18px]"></i>
+                </div>
+                <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_r5.png" alt="Gmail" class="h-10">
+            </div>
+
+            <div class="flex-1 max-w-[720px] px-2">
+                <div class="bg-[#eaf1fb] hover:bg-white hover:shadow flex items-center px-4 py-2.5 rounded-full transition-all">
+                    <i class="fa-solid fa-magnifying-glass text-gray-600 ml-1 mr-4"></i>
+                    <input type="text" placeholder="Buscar en el correo" class="bg-transparent border-none outline-none w-full text-[15px] text-gray-700">
+                    <i class="fa-solid fa-sliders text-gray-600 ml-4 p-2 rounded-full hover:bg-gray-100 cursor-pointer"></i>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1 shrink-0 px-2 text-gray-600">
+                <div class="p-2.5 rounded-full hover:bg-gray-200 cursor-pointer"><i class="fa-regular fa-circle-question text-[20px]"></i></div>
+                <div class="p-2.5 rounded-full hover:bg-gray-200 cursor-pointer"><i class="fa-solid fa-gear text-[20px]"></i></div>
+                <div class="p-2.5 rounded-full hover:bg-gray-200 cursor-pointer mr-2"><i class="fa-solid fa-braille text-[20px]"></i></div>
+                <div class="w-8 h-8 fever-logo-circle rounded-full flex items-center justify-center font-bold text-sm cursor-pointer ring-2 ring-white">E</div>
+            </div>
+        </header>
+
+        <!-- CUERPO PRINCIPAL -->
+        <div class="flex flex-1 overflow-hidden">
+
+            <!-- LEFT SIDEBAR -->
+            <aside class="w-[256px] hidden md:flex flex-col bg-[#f6f8fc] shrink-0 py-2">
+                <div class="pl-2 mb-4">
+                    <button class="bg-[#fce7f3] hover:bg-[#fbcfe8] text-[#831843] flex items-center gap-4 px-4 py-3.5 rounded-2xl font-medium text-[14px] transition shadow-sm mx-2">
+                        <i class="fa-solid fa-pencil text-[18px]"></i>
+                        Redactar
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto">
+                    <div class="nav-item active">
+                        <i class="fa-solid fa-inbox"></i>
+                        <span class="flex-1">Recibidos</span>
+                        <span class="text-xs font-bold mr-1">8</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fa-regular fa-star"></i>
+                        <span class="flex-1">Destacados</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fa-regular fa-clock"></i>
+                        <span class="flex-1">Pospuestos</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fa-regular fa-bookmark"></i>
+                        <span class="flex-1">Importantes</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fa-regular fa-paper-plane"></i>
+                        <span class="flex-1">Enviados</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- EMAIL CONTENT AREA -->
+            <div class="flex-1 bg-white md:rounded-2xl md:mr-4 md:mb-4 shadow-sm flex flex-col overflow-hidden relative">
+
+                <!-- Toolbar Pegajoso -->
+                <div class="sticky top-0 bg-white px-2 py-2 flex items-center justify-between text-[#444746] z-10">
+                    <div class="flex items-center gap-1">
+                        <div class="p-2.5 rounded-full hover:bg-[#f1f3f4] cursor-pointer"><i class="fa-solid fa-arrow-left text-[15px]"></i></div>
+                        <div class="w-[1px] h-5 bg-gray-200 mx-2"></div>
+                        <div class="p-2.5 rounded-full hover:bg-[#f1f3f4] cursor-pointer"><i class="fa-solid fa-box-archive text-[15px]"></i></div>
+                        <div class="p-2.5 rounded-full hover:bg-[#f1f3f4] cursor-pointer"><i class="fa-solid fa-circle-exclamation text-[15px]"></i></div>
+                        <div class="p-2.5 rounded-full hover:bg-[#f1f3f4] cursor-pointer"><i class="fa-regular fa-trash-can text-[15px]"></i></div>
+                        <div class="w-[1px] h-5 bg-gray-200 mx-2"></div>
+                        <div class="p-2.5 rounded-full hover:bg-[#f1f3f4] cursor-pointer"><i class="fa-regular fa-envelope text-[15px]"></i></div>
+                    </div>
+                </div>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto px-4 md:px-14 py-4" id="scrollContainer">
+
+                    <!-- Subject -->
+                    <div class="flex items-center justify-between mb-8 pl-12 pr-4 mt-2">
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <h1 class="text-[22px] text-[#1f1f1f] font-normal leading-tight">Dos noches en Madrid que encajan contigo, Elena · JUNGLE y Tame Impala</h1>
+                            <span class="bg-[#fce7f3] text-[#831843] text-[11px] font-medium px-2 py-0.5 rounded flex items-center gap-1.5 cursor-pointer hover:bg-[#fbcfe8]">
+                                Recibidos <i class="fa-solid fa-xmark text-[10px]"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 1: CAMPAÑA FEVER AURORA NIGHTS -->
+                    <div class="email-item mb-2" id="email1">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 p-1.5">
+                                <img src="https://feverup.com/logo/fever-logo-black.svg" alt="Fever" class="w-full h-full object-contain">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Fever Experiences <span class="text-xs font-normal text-gray-500">&lt;experiences@feverup.com&gt;</span></span>
+                                        <span class="text-xs text-gray-500 flex items-center gap-1">para mí <i class="fa-solid fa-caret-down text-[10px]"></i></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs">10:42 (hace 4 horas)</span>
+                                        <i class="fa-regular fa-star cursor-pointer hover:text-gray-700"></i>
+                                        <i id="replyIcon1" class="fa-solid fa-reply cursor-pointer hover:text-gray-700" title="Responder"></i>
+                                        <i class="fa-solid fa-ellipsis-vertical cursor-pointer hover:text-gray-700"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BODY DEL EMAIL -->
+                        <div class="pl-0 md:pl-12 mt-4 pb-8 border-b border-gray-100 relative">
+                            <div class="bg-white clean-email border border-gray-200 rounded-lg shadow-sm overflow-hidden" style="max-width: 720px;">
+
+                                <!-- 1. Top utility strip -->
+                                <div class="bg-gray-50 border-b border-gray-100 px-5 py-2 flex items-center justify-between text-[10px] text-gray-500">
+                                    <span>Si no puedes ver bien este correo, <a href="#" class="underline hover:text-[#E9007F]">haz clic aquí</a></span>
+                                    <span class="hidden sm:inline">Añade <a href="#" class="underline hover:text-[#E9007F]">experiences@feverup.com</a> a tu libreta</span>
+                                </div>
+
+                                <!-- 2. Header Fever: logo + Live Addict tier -->
+                                <div class="bg-[#050505] px-6 py-4 flex items-center justify-between">
+                                    <img src="https://feverup.com/logo/fever-logo-black.svg" alt="Fever" class="h-6 object-contain" style="filter: brightness(0) invert(1);">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+                                            <i class="fa-solid fa-bolt text-[#FF2D95]"></i>
+                                        </div>
+                                        <div class="flex flex-col leading-tight">
+                                            <span class="text-[10px] font-bold uppercase tracking-widest text-white">Live Addict</span>
+                                            <span class="text-[10px] text-gray-400 font-medium">Insider tier · Madrid</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 3. Navegación horizontal Fever -->
+                                <div class="bg-[#0A0A0C] px-6 py-3 border-b border-white/5 flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-wider text-gray-300">
+                                    <a href="#" class="hover:text-[#FF2D95] transition whitespace-nowrap">Música</a>
+                                    <a href="#" class="hover:text-[#FF2D95] transition">Nightlife</a>
+                                    <a href="#" class="hover:text-[#FF2D95] transition">Originals</a>
+                                    <a href="#" class="hover:text-[#FF2D95] transition">VIP</a>
+                                    <a href="#" class="hover:text-[#FF2D95] transition">Festivales</a>
+                                    <a href="#" class="text-[#FF2D95] flex items-center gap-1 whitespace-nowrap"><span>Para ti</span><i class="fa-solid fa-chevron-right text-[8px]"></i></a>
+                                </div>
+
+                                <!-- 4. Hero general: Madrid suena a planazo -->
+                                <div class="relative overflow-hidden bg-[#050505]">
+                                    <div class="relative h-[300px]">
+                                        <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1400&q=80" alt="Concierto en Madrid" class="w-full h-full object-cover opacity-65">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/20"></div>
+                                        <!-- Badge superior -->
+                                        <div class="absolute top-5 left-6 flex items-center gap-2">
+                                            <span class="bg-[#E9007F] text-white text-[10px] font-bold uppercase px-2.5 py-1 rounded tracking-widest">Acceso anticipado</span>
+                                            <span class="bg-white/10 backdrop-blur text-white text-[10px] font-bold uppercase px-2.5 py-1 rounded tracking-widest border border-white/20">Alta demanda</span>
+                                        </div>
+                                        <!-- Contenido -->
+                                        <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+                                            <p class="text-[#FF2D95] text-[10px] font-bold uppercase tracking-[0.25em] mb-2">Dos conciertos recomendados por tu afinidad musical</p>
+                                            <h1 class="text-white text-[44px] sm:text-[58px] leading-none font-extrabold mb-1 tracking-tight">Madrid suena a planazo</h1>
+                                            <p class="text-gray-300 text-[14px] sm:text-[16px] font-medium uppercase tracking-wider mb-4">JUNGLE y Tame Impala · seleccionados para ti</p>
+                                            <div class="flex flex-wrap gap-3 text-white text-[12px]">
+                                                <span class="flex items-center gap-1.5 bg-white/10 backdrop-blur px-3 py-1.5 rounded-full border border-white/15"><i class="fa-solid fa-location-dot text-[#FF2D95]"></i> Movistar Arena Madrid</span>
+                                                <span class="flex items-center gap-1.5 bg-white/10 backdrop-blur px-3 py-1.5 rounded-full border border-white/15"><i class="fa-solid fa-music text-[#FF2D95]"></i> Música alternativa · Electrónica</span>
+                                                <span class="flex items-center gap-1.5 bg-white/10 backdrop-blur px-3 py-1.5 rounded-full border border-white/15"><i class="fa-solid fa-people-group text-[#FF2D95]"></i> Plan en pareja</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 5. Mensaje personalizado -->
+                                <div class="px-6 py-6 bg-white border-b border-gray-100">
+                                    <p class="text-[14px] text-gray-700 leading-relaxed">
+                                        <strong class="text-[#18181B]">Elena, por tu historial de experiencias, tu afinidad por música alternativa/electrónica y tu patrón de compra en pareja,</strong>
+                                        hemos seleccionado dos conciertos en Madrid que encajan especialmente contigo.
+                                    </p>
+                                </div>
+
+                                <!-- 5b. Dos recomendaciones · JUNGLE (principal) + Tame Impala (alternativa) -->
+                                <div class="px-5 sm:px-6 py-2 bg-white">
+                                    <p class="text-[10.5px] font-bold uppercase tracking-widest text-[#E9007F] mb-4 flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles"></i> Dos opciones seleccionadas para ti</p>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                                        <!-- Card 1 — JUNGLE (Recomendación principal) -->
+                                        <div class="border-2 border-[#E9007F] rounded-xl overflow-hidden bg-white shadow-md flex flex-col relative">
+                                            <span class="absolute top-3 left-3 z-10 bg-[#E9007F] text-white text-[9.5px] font-bold uppercase px-2 py-0.5 rounded tracking-widest shadow-sm">Recomendación principal</span>
+                                            <div class="h-36 bg-black relative">
+                                                <img src="https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?auto=format&fit=crop&w=900&q=80" alt="Concierto urbano" class="w-full h-full object-cover opacity-80">
+                                                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                                            </div>
+                                            <div class="p-4 flex-1 flex flex-col">
+                                                <p class="text-[10px] font-bold uppercase tracking-widest text-[#E9007F] mb-1">Electronic Funk · Soul · Live Show</p>
+                                                <h4 class="text-[#18181B] font-extrabold text-[17px] leading-tight mb-2">JUNGLE en Movistar Arena Madrid</h4>
+                                                <p class="text-[12px] text-gray-600 leading-relaxed flex-1">Un plan moderno, urbano y perfecto para compartir. Alto encaje con tu afinidad por música electrónica, experiencias nocturnas y planes en pareja.</p>
+                                                <div class="flex items-center gap-2 mt-3 text-[11px] text-gray-500">
+                                                    <i class="fa-regular fa-calendar text-[#FF2D95]"></i>
+                                                    <span>15 de junio · Movistar Arena Madrid</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Card 2 — Tame Impala (Alternativa) -->
+                                        <div class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm flex flex-col relative">
+                                            <span class="absolute top-3 left-3 z-10 bg-white/95 backdrop-blur text-[#7D27FF] text-[9.5px] font-bold uppercase px-2 py-0.5 rounded tracking-widest shadow-sm border border-[#7D27FF]/30">Alta demanda</span>
+                                            <div class="h-36 bg-black relative">
+                                                <img src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=900&q=80" alt="Concierto multitudinario" class="w-full h-full object-cover opacity-80">
+                                                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                                            </div>
+                                            <div class="p-4 flex-1 flex flex-col">
+                                                <p class="text-[10px] font-bold uppercase tracking-widest text-[#7D27FF] mb-1">Psychedelic Pop · Indie · Electronic</p>
+                                                <h4 class="text-[#18181B] font-extrabold text-[17px] leading-tight mb-2">Tame Impala en Movistar Arena Madrid</h4>
+                                                <p class="text-[12px] text-gray-600 leading-relaxed flex-1">Un artista global y una de las fechas con mayor demanda esperada en Madrid. Ideal si buscas un concierto más masivo y atmosférico.</p>
+                                                <div class="flex items-center gap-2 mt-3 text-[11px] text-gray-500">
+                                                    <i class="fa-regular fa-calendar text-[#7D27FF]"></i>
+                                                    <span>Próxima fecha · Movistar Arena Madrid</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 6. Bloque Fever Agentforce -->
+                                <div class="px-5 sm:px-6 py-6">
+                                    <div class="bg-[#0A0A0C] rounded-xl p-5 sm:p-6 grid grid-cols-1 md:grid-cols-[5fr_5fr] gap-5 items-center text-white relative overflow-hidden">
+                                        <div class="absolute -top-12 -right-12 w-48 h-48 bg-[#E9007F] opacity-20 rounded-full blur-3xl pointer-events-none"></div>
+                                        <div class="absolute -bottom-16 -left-12 w-48 h-48 bg-[#C026D3] opacity-15 rounded-full blur-3xl pointer-events-none"></div>
+
+                                        <div class="relative">
+                                            <div class="flex items-center gap-3 mb-3">
+                                                <div class="w-11 h-11 rounded-full fever-logo-circle flex items-center justify-center shrink-0 shadow-lg shadow-[#E9007F]/30">
+                                                    <i class="fa-solid fa-bolt text-white text-[16px]"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-[10px] font-bold uppercase tracking-widest text-[#FF2D95] leading-tight">Fever Agentforce</p>
+                                                    <h2 class="text-[18px] font-bold text-white leading-tight">Hola Elena <span class="inline-block">👋</span></h2>
+                                                </div>
+                                            </div>
+                                            <p class="text-[13px] text-gray-300 leading-relaxed">
+                                                Soy tu asistente de Fever. He encontrado <strong class="text-white">dos conciertos que encajan contigo</strong>. <strong class="text-white">Responde a este correo</strong> y te ayudo a elegir la mejor opción: entradas, upgrades y beneficios personalizados.
+                                            </p>
+                                        </div>
+                                        <div class="flex flex-col gap-3 items-stretch md:items-end relative">
+                                            <div class="bg-white/8 backdrop-blur border border-white/15 rounded-2xl rounded-tr-md px-4 py-3 text-[13px] text-gray-200 italic shadow-sm w-full md:max-w-[320px] leading-snug">
+                                                &ldquo;Quiero un plan especial para ir con mi pareja. Algo diferente, con buen ambiente y opción premium.&rdquo;
+                                            </div>
+                                            <div id="replyArea1" class="w-full md:w-auto flex md:justify-end">
+                                                <button id="replyBtn1" class="fever-bg-magenta hover:bg-[#FF2D95] text-white font-bold text-[13px] px-5 py-3 rounded-full inline-flex items-center justify-center gap-2 cursor-pointer transition shadow-lg shadow-[#E9007F]/30 w-full md:w-auto uppercase tracking-wider">
+                                                    <i class="fa-solid fa-reply"></i> Responder a Fever Agentforce
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 7. Por qué te las recomendamos (señales del perfil) -->
+                                <div class="px-5 sm:px-6 pb-6 pt-5">
+                                    <div class="bg-[#FAFAFA] border border-gray-200 rounded-xl p-5 sm:p-6">
+                                        <p class="text-[10.5px] font-bold uppercase tracking-widest text-[#E9007F] leading-tight mb-4 flex items-center gap-2"><i class="fa-solid fa-sparkles"></i> Señales que detectamos en tu perfil</p>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[12.5px]">
+                                            <div class="flex items-start gap-2.5"><i class="fa-solid fa-music text-[#C026D3] mt-1"></i><span><strong class="text-gray-900">Alta afinidad</strong> · Música alternativa y electrónica</span></div>
+                                            <div class="flex items-start gap-2.5"><i class="fa-solid fa-people-group text-[#C026D3] mt-1"></i><span><strong class="text-gray-900">Compra habitual</strong> · 2 tickets por evento</span></div>
+                                            <div class="flex items-start gap-2.5"><i class="fa-solid fa-crown text-[#C026D3] mt-1"></i><span><strong class="text-gray-900">Propensión premium</strong> · Alta · VIP en último evento</span></div>
+                                            <div class="flex items-start gap-2.5"><i class="fa-solid fa-location-dot text-[#C026D3] mt-1"></i><span><strong class="text-gray-900">Ciudad</strong> · Madrid · Eventos cercanos</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 8. Qué podrás completar en la web -->
+                                <div class="px-5 sm:px-6 pb-6">
+                                    <div class="bg-gradient-to-br from-[#fdf2f8] to-[#faf5ff] border border-[#fbcfe8] rounded-xl p-5 sm:p-6">
+                                        <p class="text-[10.5px] font-bold uppercase tracking-widest text-[#831843] leading-tight mb-4 flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles"></i> Qué podrás añadir al concierto que elijas</p>
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <div class="bg-white border border-pink-100 rounded-lg p-3 flex flex-col items-center text-center">
+                                                <i class="fa-solid fa-crown text-[#E9007F] text-lg mb-1.5"></i>
+                                                <span class="text-[12px] font-bold text-gray-900">Upgrade VIP</span>
+                                                <span class="text-[10.5px] text-gray-500 mt-0.5">Acceso prioritario y zona reservada</span>
+                                            </div>
+                                            <div class="bg-white border border-pink-100 rounded-lg p-3 flex flex-col items-center text-center">
+                                                <i class="fa-solid fa-champagne-glasses text-[#C026D3] text-lg mb-1.5"></i>
+                                                <span class="text-[12px] font-bold text-gray-900">After-party oficial</span>
+                                                <span class="text-[10.5px] text-gray-500 mt-0.5">Continúa la noche con acceso exclusivo</span>
+                                            </div>
+                                            <div class="bg-white border border-pink-100 rounded-lg p-3 flex flex-col items-center text-center">
+                                                <i class="fa-solid fa-bolt text-[#00D4FF] text-lg mb-1.5"></i>
+                                                <span class="text-[12px] font-bold text-gray-900">Fever Insider</span>
+                                                <span class="text-[10.5px] text-gray-500 mt-0.5">Loyalty benefits y early access</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 9. CTA final: motivar respuesta -->
+                                <div class="px-5 sm:px-6 pb-6">
+                                    <div class="fever-bg-dark rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-white shadow-md relative overflow-hidden">
+                                        <div class="absolute -bottom-12 -right-12 w-40 h-40 bg-[#E9007F] opacity-25 rounded-full blur-3xl pointer-events-none"></div>
+                                        <div class="flex items-center gap-4 text-left relative">
+                                            <div class="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+                                                <i class="fa-solid fa-comments text-[#FF2D95] text-[16px]"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-bold text-[15px] leading-snug">¿Cuál encaja mejor contigo?</p>
+                                                <p class="text-[12px] text-white/80 leading-snug mt-0.5">Responde al correo y te ayudo a elegir entre <strong class="text-[#FF2D95] font-bold">JUNGLE y Tame Impala</strong>, con upgrades y beneficios personalizados.</p>
+                                            </div>
+                                        </div>
+                                        <button type="button" onclick="document.getElementById('replyBtn1').click();" class="bg-white text-[#0A0A0C] hover:bg-[#fce7f3] font-bold uppercase text-[11px] tracking-wider px-4 py-2.5 rounded inline-flex items-center gap-2 whitespace-nowrap cursor-pointer transition shrink-0 relative">
+                                            <i class="fa-solid fa-reply text-[10px]"></i> Responder al correo
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 10. Trust row -->
+                                <div class="px-5 sm:px-6 py-4 border-t border-gray-100 bg-white">
+                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px] text-gray-600">
+                                        <span class="flex items-center gap-2 justify-center"><i class="fa-solid fa-lock text-gray-400"></i> Compra segura</span>
+                                        <span class="flex items-center gap-2 justify-center"><i class="fa-solid fa-mobile-screen text-gray-400"></i> Tickets en la app</span>
+                                        <span class="flex items-center gap-2 justify-center"><i class="fa-solid fa-bolt text-gray-400"></i> Cancelación flexible</span>
+                                        <span class="flex items-center gap-2 justify-center"><i class="fa-solid fa-headset text-gray-400"></i> Soporte 24/7</span>
+                                    </div>
+                                </div>
+
+                                <!-- 11. Footer redes + app -->
+                                <div class="px-5 sm:px-6 py-5 bg-[#FAFAFA] border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div class="flex items-center gap-3 text-[11px] text-gray-600">
+                                        <span class="font-medium">Síguenos en</span>
+                                        <i class="fa-brands fa-instagram text-gray-700 text-[14px]"></i>
+                                        <i class="fa-brands fa-tiktok text-gray-700 text-[14px]"></i>
+                                        <i class="fa-brands fa-x-twitter text-gray-700 text-[14px]"></i>
+                                        <i class="fa-brands fa-spotify text-gray-700 text-[14px]"></i>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[11px] text-gray-600 font-medium mr-1">Descarga la app</span>
+                                        <span class="px-2.5 py-1.5 bg-black text-white rounded text-[10px] inline-flex items-center gap-1 font-medium">
+                                            <i class="fa-brands fa-apple text-[12px]"></i> App Store
+                                        </span>
+                                        <span class="px-2.5 py-1.5 bg-black text-white rounded text-[10px] inline-flex items-center gap-1 font-medium">
+                                            <i class="fa-brands fa-google-play text-[10px]"></i> Google Play
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CTAs Gmail: Responder + Reenviar -->
+                            <div class="mt-4 flex flex-wrap gap-3">
+                                <button type="button" onclick="document.getElementById('replyBtn1').click();" class="border border-gray-300 rounded-full px-6 py-2 text-[#444746] font-medium text-[14px] hover:bg-[#f1f3f4] transition flex items-center gap-2 cursor-pointer shadow-sm">
+                                    <i class="fa-solid fa-reply"></i> Responder
+                                </button>
+                                <button type="button" class="border border-gray-300 rounded-full px-6 py-2 text-[#444746] font-medium text-[14px] hover:bg-[#f1f3f4] transition flex items-center gap-2 cursor-pointer shadow-sm">
+                                    <i class="fa-solid fa-share"></i> Reenviar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COMPOSE 1: ELENA RESPONDE EXPONIENDO LA NECESIDAD -->
+                    <div class="email-item pt-4" id="compose1">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 fever-logo-circle rounded-full flex items-center justify-center font-bold text-lg shrink-0 z-10 shadow-sm">E</div>
+                            <div class="flex-1 border border-gray-200 rounded-xl shadow-lg bg-white overflow-hidden flex flex-col relative mt-1">
+                                <div class="px-4 py-2 border-b border-gray-100 flex items-center text-[13px] text-gray-500 bg-gray-50">
+                                    <i class="fa-solid fa-reply mr-2 text-gray-400"></i>
+                                    <span class="mr-2">Para:</span>
+                                    <span class="bg-white px-2 py-0.5 rounded-md border border-gray-200 text-gray-700 flex items-center gap-1 shadow-sm">Fever Experiences <i class="fa-solid fa-xmark text-[10px] ml-1"></i></span>
+                                </div>
+                                <div class="p-5 text-[14px] text-[#202124] min-h-[120px] outline-none bg-white leading-relaxed cursor-text" contenteditable="false">
+                                    <div id="composeBody1" class="hidden">
+                                        <p>Hola, me interesan las dos opciones.</p>
+                                        <p class="mt-2"><strong>Tame Impala</strong> me llama mucho porque es un artista enorme, pero para esta ocasión busco algo <strong>más social, con buen ambiente, para ir con mi pareja</strong> y que tenga un <strong>punto más premium</strong>.</p>
+                                        <p class="mt-2">¿Cuál me recomiendas?</p>
+                                    </div>
+                                </div>
+                                <div class="px-4 py-3 bg-gray-50 flex items-center justify-between border-t border-gray-100">
+                                    <button id="sendBtn1" class="bg-[#0b57d0] hover:bg-[#0842a0] text-white px-6 py-2 rounded-full font-medium text-sm transition shadow-sm mr-2 cursor-pointer">Enviar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 2: ELENA ENVIADO -->
+                    <div class="email-item pt-4" id="email2">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 fever-logo-circle rounded-full flex items-center justify-center font-bold text-lg shrink-0">E</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Elena Martín <span class="text-xs font-normal text-gray-500">&lt;elena.martin@gmail.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs">14:05 (hace 2 horas)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pl-0 md:pl-12 mt-2 pb-6 border-b border-gray-100">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>Hola, me interesa mucho.</p>
+                                <p class="mt-2">Busco un <strong>plan especial para ir con mi pareja</strong>. Nos gusta la <strong>música electrónica</strong> y solemos preferir experiencias con <strong>acceso cómodo, buena visibilidad y algo diferente</strong> al típico concierto.</p>
+                                <p class="mt-2">¿Qué me recomiendas?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 3: FEVER AGENTFORCE RESPONDE CON PROPUESTA + CTA WEB -->
+                    <div class="email-item pt-4" id="email3">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 p-1.5">
+                                <img src="https://feverup.com/logo/fever-logo-black.svg" alt="Fever" class="w-full h-full object-contain">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Fever Agentforce <span class="text-xs font-normal text-gray-500">&lt;agentforce@feverup.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs">14:08 (hace 2 horas)</span>
+                                        <i class="fa-solid fa-reply cursor-pointer hover:text-gray-700" title="Responder"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pl-0 md:pl-12 mt-2 pb-12 border-b-0 border-gray-100 relative">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>Hola Elena. Por lo que me cuentas, te propongo priorizar <strong>JUNGLE en Movistar Arena Madrid</strong>.</p>
+
+                                <p class="mt-3"><strong>Tame Impala</strong> tiene una demanda muy alta y encaja con tu afinidad por música alternativa, pero <strong>JUNGLE</strong> se ajusta mejor al tipo de plan que buscas ahora: una experiencia <strong>más social, urbana, bailable y perfecta para disfrutar en pareja</strong>.</p>
+
+                                <p class="mt-3">He preparado una <strong>propuesta personalizada</strong> con:</p>
+
+                                <!-- TARJETA: PROPUESTA JUNGLE -->
+                                <div class="mt-4 mb-2 bg-[#0A0A0C] rounded-xl overflow-hidden shadow-xl border border-white/5 relative">
+                                    <div class="relative h-44">
+                                        <img src="https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?auto=format&fit=crop&w=1200&q=80" alt="Concierto urbano" class="w-full h-full object-cover opacity-65">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
+                                        <div class="absolute top-3 left-3 flex items-center gap-2">
+                                            <span class="bg-[#E9007F] text-white text-[9.5px] font-bold uppercase px-2 py-0.5 rounded tracking-widest">Recomendación principal</span>
+                                        </div>
+                                        <div class="absolute bottom-0 left-0 right-0 p-4">
+                                            <p class="text-[#FF2D95] text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Electronic Funk · Soul · Live Show</p>
+                                            <h4 class="text-white font-extrabold text-[22px] leading-tight">JUNGLE · Movistar Arena Madrid</h4>
+                                            <p class="text-gray-300 text-[12px] mt-1">15 de junio · Movistar Arena Madrid</p>
+                                        </div>
+                                    </div>
+                                    <div class="p-5 text-white">
+                                        <ul class="space-y-2 text-[13px]">
+                                            <li class="flex items-start gap-3"><i class="fa-solid fa-ticket text-[#FF2D95] mt-0.5"></i><span><strong class="text-white">2 entradas</strong> para JUNGLE</span></li>
+                                            <li class="flex items-start gap-3"><i class="fa-solid fa-crown text-[#FF2D95] mt-0.5"></i><span><strong class="text-white">Opción VIP Experience</strong> preparada</span></li>
+                                            <li class="flex items-start gap-3"><i class="fa-solid fa-champagne-glasses text-[#FF2D95] mt-0.5"></i><span><strong class="text-white">After-party recomendado</strong></span></li>
+                                            <li class="flex items-start gap-3"><i class="fa-solid fa-bolt text-[#FF2D95] mt-0.5"></i><span><strong class="text-white">Beneficios Fever Insider</strong></span></li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <p class="mt-4">Puedes <strong>revisar el detalle y continuar la compra en la web</strong>, donde mantengo el contexto completo de esta conversación.</p>
+
+                                <!-- CTA principal a la web -->
+                                <div class="mt-6 text-center">
+                                    <a href="#" class="inline-block fever-bg-magenta hover:bg-[#FF2D95] text-white font-bold py-3 px-7 rounded-lg text-[13px] tracking-wider uppercase transition shadow-lg shadow-[#E9007F]/30">
+                                        <i class="fa-solid fa-arrow-right text-xs mr-2"></i> Ver propuesta de JUNGLE
+                                    </a>
+                                    <p class="text-[11px] text-gray-500 mt-2">Tu propuesta personalizada te espera en feverup.com.</p>
+                                </div>
+
+                                <p class="mt-6 text-[12px] text-gray-500 italic"><i class="fa-solid fa-sparkles text-[#E9007F]"></i> Contexto guardado en tu Golden Profile · Data Cloud + Agentforce Marketing</p>
+                            </div>
+
+                            <!-- CTAs Gmail: Responder + Reenviar -->
+                            <div class="mt-4 flex flex-wrap gap-3">
+                                <button type="button" class="border border-gray-300 rounded-full px-6 py-2 text-[#444746] font-medium text-[14px] hover:bg-[#f1f3f4] transition flex items-center gap-2 cursor-pointer shadow-sm">
+                                    <i class="fa-solid fa-reply"></i> Responder
+                                </button>
+                                <button type="button" class="border border-gray-300 rounded-full px-6 py-2 text-[#444746] font-medium text-[14px] hover:bg-[#f1f3f4] transition flex items-center gap-2 cursor-pointer shadow-sm">
+                                    <i class="fa-solid fa-share"></i> Reenviar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BANNER GMAIL DE NUEVO MENSAJE (Oculto por defecto) -->
+                    <div id="newMessageBanner" class="message-banner">
+                        <span>Nuevo mensaje de <span id="bannerSenderName">Fever Agentforce</span></span>
+                        <span class="banner-link" id="showNewMessageBtn">Ver</span>
+                        <span class="banner-link" id="ignoreNewMessageBtn">Ignorar</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE SIMULACIÓN -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Demo en modo manual: avance por teclado / clicks. Arranca directamente sin pantalla previa.
+            iniciarFlujo('manual', 2500);
+
+            // Función para simular escritura real
+            function typeHTML(el, html, speed, onComplete) {
+                html = html.replace(/\s+/g, ' ').replace(/>\s+</g, '><').trim();
+                el.innerHTML = '';
+                el.classList.remove('hidden');
+                let i = 0;
+                let currentHTML = '';
+                let timeoutId = null;
+                let isSkipped = false;
+
+                const skipTyping = (e) => {
+                    if (e.key === "Alt" || e.key === "Control" || e.key === "Shift" || e.key === "Meta") return;
+                    isSkipped = true;
+                    clearTimeout(timeoutId);
+                    el.innerHTML = html;
+                    document.removeEventListener('keydown', skipTyping);
+
+                    const container = document.getElementById('scrollContainer');
+                    if (container) {
+                        const rect = el.getBoundingClientRect();
+                        if (rect.bottom > window.innerHeight - 60) {
+                            container.scrollTop += (rect.bottom - window.innerHeight + 80);
+                        }
+                    }
+                    if (onComplete) onComplete();
+                };
+
+                document.addEventListener('keydown', skipTyping);
+
+                function type() {
+                    if (isSkipped) return;
+
+                    if (i < html.length) {
+                        let char = html.charAt(i);
+                        currentHTML += char;
+
+                        if (char === '<') {
+                            let tagEnd = html.indexOf('>', i);
+                            if (tagEnd !== -1) {
+                                currentHTML += html.substring(i + 1, tagEnd + 1);
+                                i = tagEnd;
+                            }
+                        }
+
+                        el.innerHTML = currentHTML + '<span class="typing-cursor">|</span>';
+                        i++;
+
+                        const container = document.getElementById('scrollContainer');
+                        if (container) {
+                            const rect = el.getBoundingClientRect();
+                            if (rect.bottom > window.innerHeight - 60) {
+                                container.scrollTop += 25;
+                            }
+                        }
+
+                        timeoutId = setTimeout(type, speed + Math.random() * 15);
+                    } else {
+                        el.innerHTML = currentHTML;
+                        document.removeEventListener('keydown', skipTyping);
+                        if (onComplete) onComplete();
+                    }
+                }
+                type();
+            }
+
+            function iniciarFlujo(aiMode, delayMs) {
+                // Secuencia del flujo Fever (campaña → Elena responde → Agentforce recomienda)
+                const sequence = [
+                    { action: 'show', id: 'email1', type: 'auto', delay: 500 },
+                    { action: 'show', id: 'compose1', type: 'click', triggerBtn: 'replyBtn1', altTriggerBtn: 'replyIcon1', hideId: 'replyArea1' },
+                    { action: 'reveal_content', targetId: 'composeBody1', type: 'keydown' },
+                    { action: 'replace', hideId: 'compose1', showId: 'email2', type: 'click', triggerBtn: 'sendBtn1' },
+
+                    // Fever Agentforce responde con propuesta personalizada y CTA a web
+                    { action: 'show', id: 'email3', type: 'ai_response', sender: 'Fever Agentforce' }
+                ];
+
+                const container = document.getElementById('scrollContainer');
+                let currentStep = 0;
+
+                function animateIn(el) {
+                    el.classList.add('active');
+                    void el.offsetWidth;
+                    el.classList.add('visible');
+                }
+
+                function scrollAfter(targetEl) {
+                    setTimeout(() => {
+                        const parentItem = targetEl.closest('.email-item') || targetEl;
+                        const topPos = parentItem.offsetTop - 70;
+                        container.scrollTo({ top: topPos, behavior: 'smooth' });
+                    }, 50);
+                }
+
+                function showNext() {
+                    if (currentStep >= sequence.length) return;
+
+                    const step = sequence[currentStep];
+                    let targetEl = null;
+
+                    if (step.action === 'show') {
+                        targetEl = document.getElementById(step.id);
+                        if (targetEl) animateIn(targetEl);
+
+                        if (step.hideId) {
+                            const hEl = document.getElementById(step.hideId);
+                            if (hEl) hEl.style.display = 'none';
+                        }
+                    } else if (step.action === 'replace') {
+                        const hideEl = document.getElementById(step.hideId);
+                        targetEl = document.getElementById(step.showId);
+
+                        if (hideEl) {
+                            hideEl.classList.remove('visible', 'active');
+                            hideEl.style.display = 'none';
+                        }
+                        if (targetEl) animateIn(targetEl);
+                    } else if (step.action === 'reveal_content') {
+                        const contentEl = document.getElementById(step.targetId);
+                        if (contentEl) {
+                            if (!contentEl.dataset.typed) {
+                                contentEl.dataset.typed = 'true';
+                                const htmlContent = contentEl.innerHTML;
+                                typeHTML(contentEl, htmlContent, 10);
+                            } else {
+                                contentEl.classList.remove('hidden');
+                            }
+                        }
+                        targetEl = contentEl;
+                    }
+
+                    if (targetEl) scrollAfter(targetEl);
+
+                    currentStep++;
+                    setupTriggerForCurrentStep();
+                }
+
+                function triggerNewMessageAlert(step) {
+                    const banner = document.getElementById('newMessageBanner');
+                    const targetEl = document.getElementById(step.id);
+                    const senderName = step.sender || 'Fever Experiences';
+
+                    document.getElementById('bannerSenderName').innerText = senderName;
+
+                    targetEl.parentNode.insertBefore(banner, targetEl);
+
+                    banner.style.display = 'flex';
+                    void banner.offsetWidth;
+                    banner.classList.add('visible-banner');
+
+                    setTimeout(() => {
+                        const topPos = banner.offsetTop - 70;
+                        container.scrollTo({ top: topPos, behavior: 'smooth' });
+                    }, 50);
+
+                    const showBtn = document.getElementById('showNewMessageBtn');
+                    const ignoreBtn = document.getElementById('ignoreNewMessageBtn');
+
+                    const onShow = () => {
+                        banner.classList.remove('visible-banner');
+                        setTimeout(() => {
+                            banner.style.display = 'none';
+                            showNext();
+                        }, 300);
+                        showBtn.removeEventListener('click', onShow);
+                        ignoreBtn.removeEventListener('click', onIgnore);
+                    };
+
+                    const onIgnore = () => {
+                        banner.classList.remove('visible-banner');
+                        setTimeout(() => banner.style.display = 'none', 300);
+                        showBtn.removeEventListener('click', onShow);
+                        ignoreBtn.removeEventListener('click', onIgnore);
+                    };
+
+                    showBtn.addEventListener('click', onShow);
+                    ignoreBtn.addEventListener('click', onIgnore);
+                }
+
+                function setupTriggerForCurrentStep() {
+                    if (currentStep >= sequence.length) return;
+
+                    const nextStep = sequence[currentStep];
+
+                    if (nextStep.type === 'auto') {
+                        setTimeout(showNext, nextStep.delay || 0);
+                    }
+                    else if (nextStep.type === 'click') {
+                        const btn = document.getElementById(nextStep.triggerBtn);
+                        const altBtn = nextStep.altTriggerBtn ? document.getElementById(nextStep.altTriggerBtn) : null;
+
+                        const onClick = function() {
+                            if(btn) btn.removeEventListener('click', onClick);
+                            if(altBtn) altBtn.removeEventListener('click', onClick);
+                            showNext();
+                        };
+
+                        if (btn) btn.addEventListener('click', onClick);
+                        if (altBtn) altBtn.addEventListener('click', onClick);
+                    }
+                    else if (nextStep.type === 'keydown') {
+                        const revealHandler = (e) => {
+                            if (e.key !== "Alt" && e.key !== "Control" && e.key !== "Shift" && e.key !== "Meta") {
+                                e.preventDefault();
+                                document.removeEventListener('keydown', revealHandler);
+                                showNext();
+                            }
+                        };
+                        document.addEventListener('keydown', revealHandler);
+                    }
+                    else if (nextStep.type === 'ai_response') {
+                        const triggerFn = () => {
+                            triggerNewMessageAlert(nextStep);
+                        };
+
+                        if (aiMode === 'auto') {
+                            setTimeout(triggerFn, delayMs);
+                        } else {
+                            const aiKeydownHandler = (e) => {
+                                if (e.key !== "Alt" && e.key !== "Control" && e.key !== "Shift" && e.key !== "Meta") {
+                                    document.removeEventListener('keydown', aiKeydownHandler);
+                                    triggerFn();
+                                }
+                            };
+                            document.addEventListener('keydown', aiKeydownHandler);
+                        }
+                    }
+                }
+
+                setupTriggerForCurrentStep();
+            }
+        });
+    </script>
+</body>
+</html>
